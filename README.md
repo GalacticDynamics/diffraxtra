@@ -48,6 +48,16 @@ soln = solver(term, t0=0, t1=3, dt0=0.1, y0=1, saveat=saveat,
               vectorize_interpolation=True)
 
 print(soln)
+# Solution(
+#   t0=f32[], t1=f32[], ts=f32[1],
+#   ys=f32[1],
+#   interpolation=VectorizedDenseInterpolation(
+#     scalar_interpolation=DenseInterpolation( ... ),
+#     batch_shape=(),
+#     y0_shape=()
+#   ),
+#   ...
+# )
 
 soln.evaluate(jnp.array([0.1, 0.2, 0.3, 0.4]).reshape(2, 2))
 # Array([[0.90483742, 0.81872516],

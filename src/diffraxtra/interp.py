@@ -53,7 +53,7 @@ class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):
         left: bool = True,  # noqa: FBT001, FBT002
     ) -> PyTree[Shaped[Array, "?*shape"], "Y"]:  # type: ignore[name-defined]
         """Evaluate the interpolation."""
-        return self.evaluate(t0, t1, left)
+        return self.evaluate(t0, t1, left=left)
 
     # =======================
     # DenseInterpolation API

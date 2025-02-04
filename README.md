@@ -1,5 +1,5 @@
 <h1 align='center'> diffraxtra </h1>
-<h3 align="center">Tools from <code>dataclasses</code>, extended to all of Python</h3>
+<h3 align="center"><code>diffrax</code> extras</h3>
 
 <p align="center">
     <a href="https://pypi.org/project/diffraxtra/"> <img alt="PyPI: diffraxtra" src="https://img.shields.io/pypi/v/diffraxtra?style=flat" /> </a>

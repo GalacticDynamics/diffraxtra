@@ -1,0 +1,94 @@
+ci:
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_schedule: "quarterly"
+
+repos:
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.1.0
+    hooks:
+      - id: commitizen
+        additional_dependencies: [cz-conventional-gitmoji]
+
+  - repo: meta
+    hooks:
+      - id: check-useless-excludes
+
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: "1.19.1"
+    hooks:
+      - id: blacken-docs
+        additional_dependencies: [black==24.*]
+        exclude: README.md
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v5.0.0"
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+      - id: trailing-whitespace
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "v4.0.0-alpha.8"
+    hooks:
+      - id: prettier
+        types_or: [yaml, markdown, html, css, scss, javascript, json]
+        args: [--prose-wrap=always]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.8.6"
+    hooks:
+      - id: ruff
+        args: ["--fix", "--show-fixes"]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.14.1"
+    hooks:
+      - id: mypy
+        files: src
+        args: []
+        additional_dependencies:
+          - diffrax
+          - equinox
+          - jaxtyping
+          - numpy
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: "v2.3.0"
+    hooks:
+      - id: codespell
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: "v0.10.0.1"
+    hooks:
+      - id: shellcheck
+
+  - repo: local
+    hooks:
+      - id: disallow-caps
+        name: Disallow improper capitalization
+        language: pygrep
+        entry: PyBind|Numpy|Cmake|CCache|Github|PyTest
+        exclude: .pre-commit-config.yaml
+
+  # - repo: https://github.com/abravalheri/validate-pyproject
+  #   rev: "v0.23"
+  #   hooks:
+  #     - id: validate-pyproject
+  #       additional_dependencies: ["validate-pyproject-schema-store[all]"]
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: "0.30.0"
+    hooks:
+      - id: check-dependabot
+      - id: check-github-workflows
+      - id: check-readthedocs

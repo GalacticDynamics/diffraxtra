@@ -176,7 +176,8 @@ From a `diffrax.AbstractSolver` object.
 DiffEqSolver(
   solver=Dopri5(scan_kind=None),
   stepsize_controller=ConstantStepSize(),
-  adjoint=RecursiveCheckpointAdjoint(checkpoints=None)
+  adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
+  max_steps=4096
 )
 
 ```
@@ -190,13 +191,14 @@ From a `collections.abc.Mapping`
 DiffEqSolver(
   solver=Dopri5(scan_kind=None),
   stepsize_controller=PIDController( ... ),
-  adjoint=RecursiveCheckpointAdjoint(checkpoints=None)
+  adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
+  max_steps=4096
 )
 
 ```
 
 For a full enumeration of the ways to construct a `DiffEqSolver` object, see
-`galax.dynamics.integrate.DiffEqSolver.from_`.
+`diffraxtra.DiffEqSolver.from_`.
 
 ### `VectorizedDenseInterpolation`
 

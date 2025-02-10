@@ -420,7 +420,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         in a `VectorizedDenseInterpolation`.
 
         """
-        if soln.interpolation is None:
+        if soln.interpolation is None or isinstance(soln.interpolation, cls):  # type: ignore[unreachable]
             return soln
 
         vec_soln: dfx.Solution = eqx.tree_at(

@@ -122,6 +122,9 @@ class DiffEqSolver(AbstractDiffEqSolver, strict=True):
     #: See `diffrax` for options.
     adjoint: dfx.AbstractAdjoint = eqx.field(default=default_adjoint)
 
+    #: Event. Can override the `event` argument when calling `DiffEqSolver`
+    event: dfx.Event | None = None
+
     #: The maximum number of steps to take before quitting.
     #: Some `diffrax.SaveAt` options can be incompatible with `max_steps=None`,
     #: so you can override the `max_steps` argument when calling `DiffEqSolver`

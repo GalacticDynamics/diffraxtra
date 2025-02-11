@@ -68,14 +68,13 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
     #: See `diffrax` for options.
     adjoint: eqx.AbstractVar[dfx.AbstractAdjoint]
 
+    #: Event. Can override the `event` argument when calling `DiffEqSolver`
+    event: eqx.AbstractVar[dfx.Event | None]
+
     #: The maximum number of steps to take before quitting.
     #: Some `diffrax.SaveAt` options can be incompatible with `max_steps=None`,
     #: so you can override the `max_steps` argument when calling `DiffEqSolver`
     max_steps: eqx.AbstractVar[int | None]
-
-    # TODO: should the event be a field? Again it can be overridden when calling
-    # `DiffEqSolver`. And should it be static?
-    # event: dfx.Event | None = eqx.field(default=default_event)  # noqa: ERA001
 
     @partial(eqx.filter_jit)
     # @partial(quax.quaxify)  # TODO: so don't need to strip units
@@ -91,7 +90,7 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
         *,
         # Diffrax options
         saveat: dfx.SaveAt = default_saveat,
-        event: dfx.Event | None = default_event,
+        event: dfx.Event | None | _MISSING_TYPE = MISSING,
         max_steps: int | None | _MISSING_TYPE = MISSING,
         throw: bool = default_throw,
         progress_meter: dfx.AbstractProgressMeter[Any] = default_progress_meter,
@@ -128,6 +127,8 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
         """
         # Parse `max_steps`, allowing for it to be overridden.
         max_steps = self.max_steps if max_steps is MISSING else max_steps
+        # Parse `event`, allowing for it to be overridden.
+        event = self.event if event is MISSING else event
 
         # Solve with `diffrax.diffeqsolve`, using the `DiffEqSolver`'s `solver`,
         # `stepsize_controller` and `adjoint`.
@@ -215,6 +216,7 @@ def from_(
       solver=Dopri5(scan_kind=None),
       stepsize_controller=ConstantStepSize(),
       adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
+      event=None,
       max_steps=4096
     )
 
@@ -240,6 +242,7 @@ def from_(
       solver=Dopri5(scan_kind=None),
       stepsize_controller=PIDController( ... ),
       adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
+      event=None,
       max_steps=4096
     )
 
@@ -265,6 +268,7 @@ def from_(cls: type[AbstractDiffEqSolver], obj: eqx.Partial, /) -> AbstractDiffE
       solver=Dopri5(scan_kind=None),
       stepsize_controller=ConstantStepSize(),
       adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
+      event=None,
       max_steps=4096
     )
 

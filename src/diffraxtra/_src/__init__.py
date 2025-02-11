@@ -1,4 +1,4 @@
-"""Extras for `diffrax`."""
+"""Extras for `diffrax`. Private API."""
 
 __all__ = [
     "DiffEqSolver",
@@ -6,12 +6,8 @@ __all__ = [
     "VectorizedDenseInterpolation",
 ]
 
-from ._src import (
+from .diffeq import DiffEqSolver
+from .interp import (
     AbstractVectorizedDenseInterpolation,
-    DiffEqSolver,
     VectorizedDenseInterpolation,
-)
-from ._version import (  # noqa: F401
-    version as __version__,
-    version_tuple as __version_tuple__,
 )

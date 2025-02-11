@@ -177,6 +177,7 @@ DiffEqSolver(
   solver=Dopri5(scan_kind=None),
   stepsize_controller=ConstantStepSize(),
   adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
+  event=None,
   max_steps=4096
 )
 
@@ -192,6 +193,7 @@ DiffEqSolver(
   solver=Dopri5(scan_kind=None),
   stepsize_controller=PIDController( ... ),
   adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
+  event=None,
   max_steps=4096
 )
 

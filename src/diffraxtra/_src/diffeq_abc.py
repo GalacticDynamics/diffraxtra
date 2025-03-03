@@ -160,19 +160,6 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
 
         return soln
 
-    @dispatch(precedence=-1)  # type: ignore[no-redef]
-    @partial(eqx.filter_jit)
-    def __call__(
-        self: "AbstractDiffEqSolver", terms: Any, /, **kwargs: Any
-    ) -> dfx.Solution:
-        """Solve a differential equation, with keyword arguments."""
-        t0 = kwargs.pop("t0")
-        t1 = kwargs.pop("t1")
-        dt0 = kwargs.pop("dt0")
-        y0 = kwargs.pop("y0")
-        args = kwargs.pop("args", None)
-        return self(terms, t0, t1, dt0, y0, args, **kwargs)
-
     # -------------------------------------------
 
     # TODO: a contextmanager for producing a temporary DiffEqSolver with
@@ -185,6 +172,22 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
     ) -> "AbstractDiffEqSolver":
         """Construct an `AbstractDiffEqSolver` from arguments."""
         raise NotImplementedError  # pragma: no cover
+
+
+# ==========================================================
+
+
+@AbstractDiffEqSolver.__call__.dispatch  # type: ignore[attr-defined,misc]
+@partial(eqx.filter_jit)
+def call(self: "AbstractDiffEqSolver", terms: Any, /, **kwargs: Any) -> dfx.Solution:
+    """Solve a differential equation, with keyword arguments."""
+    t0 = kwargs.pop("t0")
+    t1 = kwargs.pop("t1")
+    dt0 = kwargs.pop("dt0")
+    y0 = kwargs.pop("y0")
+    args = kwargs.pop("args", None)
+    out: dfx.Solution = self(terms, t0, t1, dt0, y0, args, **kwargs)  # type: ignore[assignment, call-arg]
+    return out
 
 
 # ==========================================================

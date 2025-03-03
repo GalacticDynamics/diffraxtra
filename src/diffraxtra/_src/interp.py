@@ -108,15 +108,15 @@ class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):
         return ys  # noqa: RET504
 
     @override
-    @property  # type: ignore[override]
-    def t0(self) -> BatchedRealScalar:
+    @property
+    def t0(self) -> BatchedRealScalar:  # type: ignore[override]
         """The start time of the interpolation."""
         flatt0 = jax.vmap(lambda x: x.t0)(self.scalar_interpolation)
         return cast(BatchedRealScalar, flatt0.reshape(*self.batch_shape))
 
     @override
-    @property  # type: ignore[override]
-    def t1(self) -> BatchedRealScalar:
+    @property
+    def t1(self) -> BatchedRealScalar:  # type: ignore[override]
         """The end time of the interpolation."""
         flatt1 = jax.vmap(lambda x: x.t1)(self.scalar_interpolation)
         return cast(BatchedRealScalar, flatt1.reshape(*self.batch_shape))
@@ -349,7 +349,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         )
 
     @classmethod
-    @dispatch.abstract  # type: ignore[misc]
+    @dispatch.abstract
     def from_(
         cls: "type[VectorizedDenseInterpolation]", *args: Any, **kw: Any
     ) -> "VectorizedDenseInterpolation":

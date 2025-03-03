@@ -25,7 +25,9 @@
   dynamic = ["version"]
   dependencies = [
     "diffrax>=0.6",
-    "plum-dispatch>=2.5.1",
+    "equinox>=0.11.5",
+    "jaxtyping>=0.2.35",
+    "plum-dispatch>=2.5.7",
     "typing_extensions>=4.12.2",
 ]
 
@@ -50,11 +52,11 @@
 ]
   nox = ["nox>=2024.10.9"]
   test = [
-    "attrs",
-    "pytest >=6",
+    "attrs >=25.1",
+    "pytest >=8,<8.1",
     "pytest-cov >=3",
-    "sybil",
-  ]
+    "sybil >=9",
+]
 
 [tool.hatch]
   version.source = "vcs"
@@ -72,6 +74,7 @@
   filterwarnings = [
     "error",
     "ignore:jax.core.Primitive is deprecated:DeprecationWarning",
+    "ignore:jax.core.pp_eqn_rules is deprecated:DeprecationWarning",
   ]
   log_cli_level = "INFO"
   testpaths = [
@@ -143,3 +146,22 @@ src = ["src"]
     "diffrax" = "dfx"
     "equinox" = "eqx"
     "numpy" = "np"
+
+
+[tool.uv]
+constraint-dependencies = [
+  # Because IPyKernel doesn't constrain its dependencies
+  "appnope >=0.1.4",
+  "cffi >=1.17",
+  "decorator >=5.1",
+  "psutil >=6.1.1",
+  "py >=1.11",
+  # Matplotlib
+  "matplotlib >=3.10",
+  "pillow>=10.3.0",
+  # Jax
+  "scipy >=1.14",
+  "jax>0.4.34",
+  # Misc
+  "opt-einsum >=3.3.0",
+]

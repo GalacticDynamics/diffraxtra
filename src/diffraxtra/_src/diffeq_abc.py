@@ -230,13 +230,7 @@ def from_(
 
     >>> solver = DiffEqSolver.from_(dfx.Dopri5())
     >>> solver
-    DiffEqSolver(
-      solver=Dopri5(scan_kind=None),
-      stepsize_controller=ConstantStepSize(),
-      adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
-      event=None,
-      max_steps=4096
-    )
+    DiffEqSolver(solver=Dopri5())
 
     """
     return cls(scheme, **kwargs)
@@ -257,11 +251,7 @@ def from_(
     ...       "stepsize_controller": dfx.PIDController(rtol=1e-5, atol=1e-5)})
     >>> solver
     DiffEqSolver(
-      solver=Dopri5(scan_kind=None),
-      stepsize_controller=PIDController( ... ),
-      adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
-      event=None,
-      max_steps=4096
+      solver=Dopri5(), stepsize_controller=PIDController(rtol=1e-05, atol=1e-05)
     )
 
     """
@@ -282,13 +272,7 @@ def from_(cls: type[AbstractDiffEqSolver], obj: eqx.Partial, /) -> AbstractDiffE
 
     >>> solver = DiffEqSolver.from_(partial)
     >>> solver
-    DiffEqSolver(
-      solver=Dopri5(scan_kind=None),
-      stepsize_controller=ConstantStepSize(),
-      adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
-      event=None,
-      max_steps=4096
-    )
+    DiffEqSolver(solver=Dopri5())
 
     """
     obj = eqx.error_if(

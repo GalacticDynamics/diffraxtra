@@ -173,15 +173,12 @@ From a `diffrax.AbstractSolver` object.
 ```pycon
 >>> solver = DiffEqSolver.from_(dfx.Dopri5())
 >>> solver
-DiffEqSolver(
-  solver=Dopri5(scan_kind=None),
-  stepsize_controller=ConstantStepSize(),
-  adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
-  event=None,
-  max_steps=4096
-)
+DiffEqSolver(solver=Dopri5())
 
 ```
+
+(Where all other arguments are their default values and printed only if
+changed.)
 
 From a `collections.abc.Mapping`
 
@@ -190,11 +187,7 @@ From a `collections.abc.Mapping`
 ...       "stepsize_controller": dfx.PIDController(rtol=1e-5, atol=1e-5)})
 >>> solver
 DiffEqSolver(
-  solver=Dopri5(scan_kind=None),
-  stepsize_controller=PIDController( ... ),
-  adjoint=RecursiveCheckpointAdjoint(checkpoints=None),
-  event=None,
-  max_steps=4096
+  solver=Dopri5(), stepsize_controller=PIDController(rtol=1e-05, atol=1e-05)
 )
 
 ```

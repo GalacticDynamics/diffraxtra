@@ -76,8 +76,11 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
     #: so you can override the `max_steps` argument when calling `DiffEqSolver`
     max_steps: eqx.AbstractVar[int | None]
 
-    @partial(eqx.filter_jit)
+    # -------------------------------------------
+
     # @partial(quax.quaxify)  # TODO: so don't need to strip units
+    @dispatch
+    @partial(eqx.filter_jit)
     def __call__(
         self: "AbstractDiffEqSolver",
         terms: PyTree[dfx.AbstractTerm],
@@ -157,11 +160,26 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
 
         return soln
 
+    @dispatch(precedence=-1)  # type: ignore[no-redef]
+    @partial(eqx.filter_jit)
+    def __call__(
+        self: "AbstractDiffEqSolver", terms: Any, /, **kwargs: Any
+    ) -> dfx.Solution:
+        """Solve a differential equation, with keyword arguments."""
+        t0 = kwargs.pop("t0")
+        t1 = kwargs.pop("t1")
+        dt0 = kwargs.pop("dt0")
+        y0 = kwargs.pop("y0")
+        args = kwargs.pop("args", None)
+        return self(terms, t0, t1, dt0, y0, args, **kwargs)
+
+    # -------------------------------------------
+
     # TODO: a contextmanager for producing a temporary DiffEqSolver with
     # different field values.
 
     @classmethod
-    @dispatch.abstract  # type: ignore[misc]
+    @dispatch.abstract
     def from_(
         cls: "type[AbstractDiffEqSolver]", *args: Any, **kwargs: Any
     ) -> "AbstractDiffEqSolver":

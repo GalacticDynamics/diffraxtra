@@ -349,7 +349,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         )
 
     @classmethod
-    @dispatch.abstract  # type: ignore[misc]
+    @dispatch.abstract
     def from_(
         cls: "type[VectorizedDenseInterpolation]", *args: Any, **kw: Any
     ) -> "VectorizedDenseInterpolation":

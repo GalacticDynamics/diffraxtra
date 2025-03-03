@@ -61,6 +61,7 @@ repos:
           - equinox
           - jaxtyping
           - numpy
+          - plum-dispatch
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.3.0"

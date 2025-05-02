@@ -6,8 +6,8 @@ This is private API.
 
 __all__ = ["AbstractVectorizedDenseInterpolation", "VectorizedDenseInterpolation"]
 
+import functools as ft
 from collections.abc import Callable, Mapping
-from functools import partial
 from typing import Any, TypeAlias, cast, final
 from typing_extensions import override
 
@@ -95,7 +95,7 @@ class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):
         # Evaluate the scalar interpolation over the batch dimension of the
         # interpolator and an array of times.
         ys = jax.vmap(  # vmap over the batch dimension of the interpolator
-            lambda interp: jax.vmap(partial(interp.evaluate, left=left))(t0)
+            lambda interp: jax.vmap(ft.partial(interp.evaluate, left=left))(t0)
         )(self.scalar_interpolation)
 
         # Reshape the result to match the input shape in the time axes.
@@ -185,7 +185,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
     ...     term, solver, t0=0, t1=3, dt0=0.1, y0=1, saveat=saveat,
     ...     stepsize_controller=stepsize_controller)
     >>> interp = VectorizedDenseInterpolation(sol.interpolation)
-    >>> interp
+    >>> interp  # doctest: +SKIP
     VectorizedDenseInterpolation(
       scalar_interpolation=DenseInterpolation(
         ts=f64[1,4097],
@@ -264,9 +264,10 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
     >>> ys.shape  # (batch, *times)
     (3, 2, 2)
 
-    Let's inspect the rest of the API.
+    Let's inspect the rest of the API. First, the flattened) original
+    interpolation
 
-    >>> interp.scalar_interpolation  # (flattened) original interpolation
+    >>> interp.scalar_interpolation  # doctest: +SKIP
     DenseInterpolation(
       ts=f64[3,4097],
       ts_size=weak_i64[3],

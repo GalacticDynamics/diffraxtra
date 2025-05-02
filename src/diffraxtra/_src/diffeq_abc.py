@@ -9,10 +9,10 @@ __all__ = [
     "params",
 ]
 
+import functools as ft
 import inspect
 from collections.abc import Mapping
 from dataclasses import _MISSING_TYPE, KW_ONLY, MISSING
-from functools import partial
 from typing import Any, TypeAlias
 
 import diffrax as dfx
@@ -78,9 +78,9 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
 
     # -------------------------------------------
 
-    # @partial(quax.quaxify)  # TODO: so don't need to strip units
+    # @ft.partial(quax.quaxify)  # TODO: so don't need to strip units
     @dispatch
-    @partial(eqx.filter_jit)
+    @ft.partial(eqx.filter_jit)
     def __call__(
         self: "AbstractDiffEqSolver",
         terms: PyTree[dfx.AbstractTerm],
@@ -178,7 +178,7 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
 
 
 @AbstractDiffEqSolver.__call__.dispatch  # type: ignore[attr-defined,misc]
-@partial(eqx.filter_jit)
+@ft.partial(eqx.filter_jit)
 def call(self: "AbstractDiffEqSolver", terms: Any, /, **kwargs: Any) -> dfx.Solution:
     """Solve a differential equation, with keyword arguments."""
     t0 = kwargs.pop("t0")

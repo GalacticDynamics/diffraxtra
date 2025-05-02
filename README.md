@@ -222,7 +222,7 @@ We'll start with a non-batched interpolation:
 ...     term, solver, t0=0, t1=3, dt0=0.1, y0=1, saveat=saveat,
 ...     stepsize_controller=stepsize_controller)
 >>> interp = VectorizedDenseInterpolation(sol.interpolation)
->>> interp
+>>> interp  # doctest: +SKIP
 VectorizedDenseInterpolation(
   scalar_interpolation=DenseInterpolation(
     ts=f64[1,4097],

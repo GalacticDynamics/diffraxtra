@@ -183,7 +183,7 @@ def call(self: "AbstractDiffEqSolver", terms: Any, /, **kwargs: Any) -> dfx.Solu
     """Solve a differential equation, with keyword arguments."""
     t0 = kwargs.pop("t0")
     t1 = kwargs.pop("t1")
-    dt0 = kwargs.pop("dt0")
+    dt0 = kwargs.pop("dt0", None)
     y0 = kwargs.pop("y0")
     args = kwargs.pop("args", None)
     out: dfx.Solution = self(terms, t0, t1, dt0, y0, args, **kwargs)  # type: ignore[assignment, call-arg]

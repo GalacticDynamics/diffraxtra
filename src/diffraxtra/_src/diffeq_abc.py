@@ -265,8 +265,8 @@ def from_(
 @AbstractDiffEqSolver.from_.dispatch  # type: ignore[no-redef]
 def from_(
     cls: type[AbstractDiffEqSolver],
-    obj: eqx.Partial,
-    /,  # type: ignore[type-arg]
+    obj: eqx.Partial,  # type: ignore[type-arg]
+    /,
 ) -> AbstractDiffEqSolver:
     """Construct a `DiffEqSolver` from an `equinox.Partial`.
 

@@ -90,6 +90,8 @@ filterwarnings = [
   "error",
   "ignore:jax.core.Primitive is deprecated:DeprecationWarning",
   "ignore:jax.core.pp_eqn_rules is deprecated:DeprecationWarning",
+  # Equinox 0.11.5 & Jax 0.4.35
+  "ignore:jax.interpreters.batching.NotMapped is deprecated:DeprecationWarning",
 ]
 log_cli_level = "INFO"
 testpaths = ["README.md", "src/", "tests/"]

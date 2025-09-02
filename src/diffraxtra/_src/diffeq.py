@@ -32,7 +32,7 @@ default_adjoint = params["adjoint"].default
 
 
 @final
-class DiffEqSolver(AbstractDiffEqSolver, strict=True):
+class DiffEqSolver(AbstractDiffEqSolver):  # pylint: disable=R0903,W0223
     """Class-based interface for solving differential equations.
 
     This is a convenience wrapper around `diffrax.diffeqsolve`, allowing for

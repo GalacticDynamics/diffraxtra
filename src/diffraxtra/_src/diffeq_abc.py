@@ -81,7 +81,7 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
     # @ft.partial(quax.quaxify)  # TODO: so don't need to strip units
     @dispatch
     @ft.partial(eqx.filter_jit)
-    def __call__(
+    def __call__(  # pylint: disable=R0913,R0914,R0917
         self: "AbstractDiffEqSolver",
         terms: PyTree[dfx.AbstractTerm],
         /,
@@ -211,7 +211,7 @@ def from_(
     True
 
     """
-    if type(obj) is not cls:
+    if type(obj) is not cls:  # pylint: disable=unidiomatic-typecheck
         msg = f"Cannot convert {type(obj)} to {cls}"
         raise TypeError(msg)
     return obj

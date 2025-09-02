@@ -59,11 +59,11 @@ nox = [
     "nox>=2024.10.9",
 ]
 test = [
-  "attrs >=25.1",
+  "attrs>=25.3.0",
   "pytest>=8.3.3",
-  "pytest-cov>=3",
+  "pytest-cov>=6.2.1",
   "pytest-github-actions-annotate-failures>=0.2.0",
-  "sybil>=9.1.0",
+  "sybil[pytest]>=9.1.0",
 ]
 
 
@@ -184,17 +184,26 @@ disable = [
 [tool.uv]
 constraint-dependencies = [
   # Because IPyKernel doesn't constrain its dependencies
-  "appnope >=0.1.4",
-  "cffi >=1.17",
-  "decorator >=5.1",
-  "psutil >=6.1.1",
-  "py >=1.11",
+  "appnope>=0.1.4",
+  "cffi>=1.17",
+  "decorator>=5.1",
+  "psutil>=6.1.1",
+  "py>=1.11",
   # Matplotlib
-  "matplotlib >=3.10",
+  "matplotlib>=3.10",
   "pillow>=10.3.0",
   # Jax
-  "scipy >=1.14",
+  "scipy>=1.14",
   "jax>0.4.34",
   # Misc
-  "opt-einsum >=3.3.0",
+  "opt-einsum>=3.3.0",
+  # Transitive dependencies for --resolution lowest
+  "future>=0.16.0",
+  "backcall>=0.1.0",
+  "wcwidth>=0.1.0",
+  "iniconfig>=0.1.0",
+  "nest-asyncio>=0.1.0",
+  "pickleshare>=0.7",
+  "tomli>=1.0",
+  "pycparser>=2.10",
 ]

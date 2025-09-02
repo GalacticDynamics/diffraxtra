@@ -65,6 +65,9 @@ class DiffEqSolver(AbstractDiffEqSolver):  # pylint: disable=R0903,W0223
     Then solve the differential equation.
 
     >>> soln = solver(term, t0=0, t1=3, dt0=0.1, y0=1)
+
+    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
+
     >>> soln
     Solution( t0=f64[], t1=f64[], ts=f64[1],
               ys=f64[1], ... )

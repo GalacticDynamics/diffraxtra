@@ -232,6 +232,9 @@ def from_(
     >>> from diffraxtra import DiffEqSolver
 
     >>> solver = DiffEqSolver.from_(dfx.Dopri5())
+
+    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
+
     >>> solver
     DiffEqSolver(solver=Dopri5())
 
@@ -252,6 +255,9 @@ def from_(
 
     >>> solver = DiffEqSolver.from_({"solver": dfx.Dopri5(),
     ...       "stepsize_controller": dfx.PIDController(rtol=1e-5, atol=1e-5)})
+
+    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
+
     >>> solver
     DiffEqSolver(
       solver=Dopri5(), stepsize_controller=PIDController(rtol=1e-05, atol=1e-05)
@@ -279,6 +285,9 @@ def from_(
     >>> partial = eqx.Partial(dfx.diffeqsolve, solver=dfx.Dopri5())
 
     >>> solver = DiffEqSolver.from_(partial)
+
+    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
+
     >>> solver
     DiffEqSolver(solver=Dopri5())
 

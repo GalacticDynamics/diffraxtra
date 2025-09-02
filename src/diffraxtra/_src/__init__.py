@@ -1,6 +1,6 @@
 """Extras for `diffrax`. Private API."""
 
-__all__ = [
+__all__ = [  # pylint: disable=R0801
     "AbstractDiffEqSolver",
     "DiffEqSolver",
     "AbstractVectorizedDenseInterpolation",

@@ -42,126 +42,168 @@
   requires = ["hatchling", "hatch-vcs"]
   build-backend = "hatchling.build"
 
+
 [dependency-groups]
-  dev = [
-    "cz-conventional-gitmoji>=0.6.1",
-    { "include-group" = "nox" },
-    { "include-group" = "test" },
-    "pre-commit>=4.1.0",
-    "ipykernel>=6.29.5",
+dev = [
+  "ipykernel>=6.29.5",
+  "cz-conventional-gitmoji>=0.6.1",
+  {include-group = "lint"},
+  {include-group = "nox"},
+  {include-group = "test"},
 ]
-  nox = ["nox>=2024.10.9"]
-  test = [
-    "attrs >=25.1",
-    "pytest >=8,<8.1",
-    "pytest-cov >=3",
-    "sybil >=9",
+lint = [
+    "pre-commit>=4.1.0",
+    "pylint>=3.3.8",
+]
+nox = [
+    "nox>=2024.10.9",
+]
+test = [
+  "attrs>=25.3.0",
+  "pytest>=8.3.3",
+  "pytest-cov>=6.2.1",
+  "pytest-github-actions-annotate-failures>=0.2.0",
+  "sybil[pytest]>=9.1.0",
 ]
 
+
 [tool.hatch]
-  version.source = "vcs"
-  build.hooks.vcs.version-file = "src/diffraxtra/_version.py"
+version.source = "vcs"
+build.hooks.vcs.version-file = "src/diffraxtra/_version.py"
 
 
 [tool.commitizen]
-  name = "cz_gitmoji"
+name = "cz_gitmoji"
 
 
 [tool.pytest.ini_options]
-  minversion = "6.0"
-  addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
-  xfail_strict = true
-  filterwarnings = [
-    "error",
-    "ignore:jax.core.Primitive is deprecated:DeprecationWarning",
-    "ignore:jax.core.pp_eqn_rules is deprecated:DeprecationWarning",
-  ]
-  log_cli_level = "INFO"
-  testpaths = [
-    "README.md", "src", "tests",
-  ]
+minversion = "8.3"
+addopts = [
+  "--showlocals",
+  "--strict-config",
+  "--strict-markers",
+  "-p no:doctest",    # using sybil
+  "-ra",
+]
+xfail_strict = true
+filterwarnings = [
+  "error",
+  "ignore:jax.core.Primitive is deprecated:DeprecationWarning",
+  "ignore:jax.core.pp_eqn_rules is deprecated:DeprecationWarning",
+  # Equinox 0.11.5 & Jax 0.4.35
+  "ignore:jax.interpreters.batching.NotMapped is deprecated:DeprecationWarning",
+]
+log_cli_level = "INFO"
+testpaths = ["README.md", "src/", "tests/"]
+norecursedirs = [
+  ".*",          # ignores .hypothesis, .git, etc.
+  "__pycache__"
+]
 
 
 [tool.coverage]
-  run.source = ["diffraxtra"]
-  report.exclude_also = [
-    '\.\.\.',
-    'if typing.TYPE_CHECKING:',
-  ]
+run.source = ["diffraxtra"]
+report.exclude_also = [
+  '\.\.\.',
+  'if TYPE_CHECKING:',
+]
+
 
 [tool.mypy]
-  files = ["src"]
-  python_version = "3.11"
-  warn_unused_configs = true
-  strict = true
-  enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-  warn_unreachable = true
-  disallow_untyped_defs = false
-  disallow_incomplete_defs = false
+files = ["src"]
+python_version = "3.11"
+warn_unused_configs = true
+strict = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
-  [[tool.mypy.overrides]]
-  module = "diffraxtra.*"
-  disallow_untyped_defs = true
-  disallow_incomplete_defs = true
+[[tool.mypy.overrides]]
+module = "diffraxtra.*"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
 
-  [[tool.mypy.overrides]]
-  ignore_missing_imports = true
-  module = ["plum.*"]
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ["plum.*"]
 
 
 [tool.ruff]
 src = ["src"]
 
-  [tool.ruff.lint]
-    extend-select = ["ALL"]
-    ignore = [
-      "ANN401",   # Dynamically typed expressions are disallowed in `**kwargs`
-      "COM812",   # For ruff.format
-      "D107",    # Missing docstring in `__init__`
-      "D203",     # 1 blank line required before class docstring
-      "D213",     # Multi-line docstring summary should start at the first line
-      "F722",    # Syntax error in forward annotation  <- jaxtyping
-      "F811",     # Redefinition of unused '...'  (for plum-dispatch)
-      "F821",    # undefined name  <- jaxtyping
-      "FIX002",   # Line contains TODO
-      "ISC001",   # Conflicts with formatter
-      "PLR09",    # Too many <...>
-      "PLR2004",  # Magic value used in comparison
-      "RUF022",   # `__all__` is not sorted
-      "TD002",    # Missing author in TODO
-      "TD003",    # Missing issue link on the line following this TODO
-      "UP037",   # Remove quote from type annotation  <- jaxtyping
-    ]
+[tool.ruff.lint]
+  extend-select = ["ALL"]
+  ignore = [
+    "ANN401",   # Dynamically typed expressions are disallowed in `**kwargs`
+    "COM812",   # For ruff.format
+    "D107",    # Missing docstring in `__init__`
+    "D203",     # 1 blank line required before class docstring
+    "D213",     # Multi-line docstring summary should start at the first line
+    "F722",    # Syntax error in forward annotation  <- jaxtyping
+    "F811",     # Redefinition of unused '...'  (for plum-dispatch)
+    "F821",    # undefined name  <- jaxtyping
+    "FIX002",   # Line contains TODO
+    "ISC001",   # Conflicts with formatter
+    "PLR09",    # Too many <...>
+    "PLR2004",  # Magic value used in comparison
+    "RUF022",   # `__all__` is not sorted
+    "TD002",    # Missing author in TODO
+    "TD003",    # Missing issue link on the line following this TODO
+    "UP037",   # Remove quote from type annotation  <- jaxtyping
+  ]
 
-    [tool.ruff.lint.per-file-ignores]
-    "tests/**" = ["ANN", "S101", "T20"]
-    "noxfile.py" = ["T20"]
-    "docs/conf.py" = ["INP001"]
+  [tool.ruff.lint.per-file-ignores]
+  "tests/**" = ["ANN", "S101", "T20"]
+  "noxfile.py" = ["T20"]
+  "docs/conf.py" = ["INP001"]
 
-    [tool.ruff.lint.isort]
-    combine-as-imports = true
-    extra-standard-library = ["typing_extensions"]
+  [tool.ruff.lint.isort]
+  combine-as-imports = true
+  extra-standard-library = ["typing_extensions"]
 
-    [tool.ruff.lint.flake8-import-conventions.extend-aliases]
-    "diffrax" = "dfx"
-    "equinox" = "eqx"
-    "numpy" = "np"
+  [tool.ruff.lint.flake8-import-conventions.extend-aliases]
+  "diffrax" = "dfx"
+  "equinox" = "eqx"
+  "numpy" = "np"
+
+
+[tool.pylint]
+py-version = "3.11"
+ignore-paths = [".*/_version.py"]
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+disable = [
+  "fixme",
+  "function-redefined",  # incompatible with plum-dispatch
+  "line-too-long",  # handled by ruff
+  "no-member",  # handled by mypy
+]
 
 
 [tool.uv]
 constraint-dependencies = [
   # Because IPyKernel doesn't constrain its dependencies
-  "appnope >=0.1.4",
-  "cffi >=1.17",
-  "decorator >=5.1",
-  "psutil >=6.1.1",
-  "py >=1.11",
+  "appnope>=0.1.4",
+  "cffi>=1.17",
+  "decorator>=5.1",
+  "psutil>=6.1.1",
+  "py>=1.11",
   # Matplotlib
-  "matplotlib >=3.10",
+  "matplotlib>=3.10",
   "pillow>=10.3.0",
   # Jax
-  "scipy >=1.14",
+  "scipy>=1.14",
   "jax>0.4.34",
   # Misc
-  "opt-einsum >=3.3.0",
+  "opt-einsum>=3.3.0",
+  # Transitive dependencies for --resolution lowest
+  "future>=0.16.0",
+  "backcall>=0.1.0",
+  "wcwidth>=0.1.0",
+  "iniconfig>=0.1.0",
+  "nest-asyncio>=0.1.0",
+  "pickleshare>=0.7",
+  "tomli>=1.0",
+  "pycparser>=2.10",
 ]

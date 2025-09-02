@@ -81,7 +81,7 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
     # @ft.partial(quax.quaxify)  # TODO: so don't need to strip units
     @dispatch
     @ft.partial(eqx.filter_jit)
-    def __call__(
+    def __call__(  # pylint: disable=R0913,R0914,R0917
         self: "AbstractDiffEqSolver",
         terms: PyTree[dfx.AbstractTerm],
         /,
@@ -211,7 +211,7 @@ def from_(
     True
 
     """
-    if type(obj) is not cls:
+    if type(obj) is not cls:  # pylint: disable=unidiomatic-typecheck
         msg = f"Cannot convert {type(obj)} to {cls}"
         raise TypeError(msg)
     return obj
@@ -232,6 +232,9 @@ def from_(
     >>> from diffraxtra import DiffEqSolver
 
     >>> solver = DiffEqSolver.from_(dfx.Dopri5())
+
+    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
+
     >>> solver
     DiffEqSolver(solver=Dopri5())
 
@@ -252,6 +255,9 @@ def from_(
 
     >>> solver = DiffEqSolver.from_({"solver": dfx.Dopri5(),
     ...       "stepsize_controller": dfx.PIDController(rtol=1e-5, atol=1e-5)})
+
+    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
+
     >>> solver
     DiffEqSolver(
       solver=Dopri5(), stepsize_controller=PIDController(rtol=1e-05, atol=1e-05)
@@ -279,6 +285,9 @@ def from_(
     >>> partial = eqx.Partial(dfx.diffeqsolve, solver=dfx.Dopri5())
 
     >>> solver = DiffEqSolver.from_(partial)
+
+    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
+
     >>> solver
     DiffEqSolver(solver=Dopri5())
 

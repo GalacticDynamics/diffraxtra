@@ -13,10 +13,28 @@ nox.options.default_venv_backend = "uv|virtualenv"
 
 
 @nox.session
-def lint(session: nox.Session) -> None:
+def check(session: nox.Session, /) -> None:
+    """Run all checks."""
+    lint(session)
+    test(session)
+
+
+# =============================================================================
+
+
+@nox.session
+def lint(session: nox.Session, /) -> None:
     """Run the linter."""
-    session.install("pre-commit")
+    precommit(session)
+    pylint(session)
+
+
+@nox.session
+def precommit(session: nox.Session, /) -> None:
+    """Run the pre-commit hooks."""
     session.run(
+        "uv",
+        "run",
         "pre-commit",
         "run",
         "--all-files",
@@ -26,27 +44,39 @@ def lint(session: nox.Session) -> None:
 
 
 @nox.session
-def pylint(session: nox.Session) -> None:
+def pylint(session: nox.Session, /) -> None:
     """Run PyLint."""
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install(".", "pylint")
-    session.run("pylint", "diffraxtra", *session.posargs)
+    session.run("uv", "sync", "--group", "lint")
+    session.run("uv", "run", "pylint", "src", *session.posargs)
+
+
+# =============================================================================
+# Testing
 
 
 @nox.session
-def tests(session: nox.Session) -> None:
-    """Run the unit and regular tests."""
-    session.install(".[test]")
-    session.run("pytest", *session.posargs)
+def test(session: nox.Session, /) -> None:
+    """Run the tests."""
+    session.run("uv", "sync", "--group", "test")
+    session.run("uv", "run", "pytest", *session.posargs)
+
+
+# =============================================================================
+# Packaging
 
 
 @nox.session
-def build(session: nox.Session) -> None:
-    """Build an SDist and wheel."""
+def rm_build(_: nox.Session, /) -> None:
+    """Remove the build directory."""
     build_path = DIR.joinpath("build")
     if build_path.exists():
         shutil.rmtree(build_path)
 
-    session.install("build")
-    session.run("python", "-m", "build")
+
+@nox.session
+def build(session: nox.Session, /) -> None:
+    """Build an SDist and wheel."""
+    rm_build(session)
+    session.run("uv", "build", *session.posargs)

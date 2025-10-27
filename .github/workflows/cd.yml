@@ -22,8 +22,9 @@ env:
 jobs:
   dist:
     name: Distribution build
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v5
         with:

@@ -112,14 +112,14 @@ class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):
     def t0(self) -> BatchedRealScalar:  # type: ignore[override]
         """The start time of the interpolation."""
         flatt0 = jax.vmap(lambda x: x.t0)(self.scalar_interpolation)
-        return cast(BatchedRealScalar, flatt0.reshape(*self.batch_shape))
+        return cast("BatchedRealScalar", flatt0.reshape(*self.batch_shape))
 
     @override
     @property
     def t1(self) -> BatchedRealScalar:  # type: ignore[override]
         """The end time of the interpolation."""
         flatt1 = jax.vmap(lambda x: x.t1)(self.scalar_interpolation)
-        return cast(BatchedRealScalar, flatt1.reshape(*self.batch_shape))
+        return cast("BatchedRealScalar", flatt1.reshape(*self.batch_shape))
 
     @property
     def ts(self) -> BatchedRealTimes:
@@ -129,12 +129,12 @@ class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):
     @property
     def ts_size(self) -> Int[Array, "..."]:  # TODO: shape
         """The number of times in the interpolation."""
-        return cast(Array, self.scalar_interpolation.ts_size)
+        return cast("Array", self.scalar_interpolation.ts_size)
 
     @property
     def infos(self) -> VecDenseInfos:
         """The infos of the interpolation."""
-        return cast(VecDenseInfos, self.scalar_interpolation.infos)
+        return self.scalar_interpolation.infos
 
     @property
     def interpolation_cls(self) -> Callable[..., dfx.AbstractLocalInterpolation]:
@@ -144,12 +144,12 @@ class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):
     @property
     def direction(self) -> BatchedIntScalar:
         """Direction vector."""
-        return cast(BatchedIntScalar, self.scalar_interpolation.direction)
+        return cast("BatchedIntScalar", self.scalar_interpolation.direction)
 
     @property
     def t0_if_trivial(self) -> BatchedRealScalar:
         """The start time of the interpolation if scalar input."""
-        return cast(BatchedRealScalar, self.scalar_interpolation.t0_if_trivial)
+        return cast("BatchedRealScalar", self.scalar_interpolation.t0_if_trivial)
 
     @property  # TODO: get the shape correct
     def y0_if_trivial(self) -> PyTree[RealScalarLike, "Y"]:  # type: ignore[name-defined]

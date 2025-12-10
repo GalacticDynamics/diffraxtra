@@ -36,7 +36,7 @@ default_event = params["event"].default
 default_throw = params["throw"].default
 
 
-class AbstractDiffEqSolver(eqx.Module, strict=True):
+class AbstractDiffEqSolver(eqx.Module):
     """Class-based interface for solving differential equations.
 
     This is a convenience wrapper around `diffrax.diffeqsolve`, allowing for
@@ -177,7 +177,7 @@ class AbstractDiffEqSolver(eqx.Module, strict=True):
 # ==========================================================
 
 
-@AbstractDiffEqSolver.__call__.dispatch  # type: ignore[attr-defined,misc]
+@AbstractDiffEqSolver.__call__.dispatch  # type: ignore[attr-defined,untyped-decorator]
 @ft.partial(eqx.filter_jit)
 def call(self: "AbstractDiffEqSolver", terms: Any, /, **kwargs: Any) -> dfx.Solution:
     """Solve a differential equation, with keyword arguments."""

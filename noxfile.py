@@ -1,73 +1,78 @@
-"""Nox configuration."""
+"""Nox setup."""
 
 import shutil
 from pathlib import Path
 
 import nox
+from nox_uv import session
+
+nox.needs_version = ">=2024.3.2"
+nox.options.default_venv_backend = "uv"
 
 DIR = Path(__file__).parent.resolve()
 
-nox.needs_version = ">=2024.3.2"
-nox.options.sessions = ["lint", "tests"]
-nox.options.default_venv_backend = "uv|virtualenv"
+# =============================================================================
+# Check
 
 
-@nox.session
-def check(session: nox.Session, /) -> None:
+@session(reuse_venv=True)
+def check(s: nox.Session, /) -> None:
     """Run all checks."""
-    lint(session)
-    test(session)
+    lint(s)
+    test(s)
 
 
 # =============================================================================
+# Linting
 
 
-@nox.session
-def lint(session: nox.Session, /) -> None:
+@session(uv_groups=["lint"], reuse_venv=True)
+def lint(s: nox.Session, /) -> None:
     """Run the linter."""
-    precommit(session)
-    pylint(session)
+    s.notify("precommit")
+    s.notify("pylint")
+    s.notify("mypy")
 
 
-@nox.session
-def precommit(session: nox.Session, /) -> None:
+@session(uv_groups=["lint"], reuse_venv=True)
+def precommit(s: nox.Session, /) -> None:
     """Run the pre-commit hooks."""
-    session.run(
-        "uv",
-        "run",
-        "pre-commit",
-        "run",
-        "--all-files",
-        "--show-diff-on-failure",
-        *session.posargs,
-    )
+    s.run("pre-commit", "run", "--all-files", *s.posargs)
 
 
-@nox.session
-def pylint(session: nox.Session, /) -> None:
+@session(uv_groups=["lint"], reuse_venv=True)
+def pylint(s: nox.Session, /) -> None:
     """Run PyLint."""
-    # This needs to be installed into the package environment, and is slower
-    # than a pre-commit check
-    session.run("uv", "sync", "--group", "lint")
-    session.run("uv", "run", "pylint", "src", *session.posargs)
+    s.run("pylint", "src", *s.posargs)
+
+
+@session(uv_groups=["lint"], reuse_venv=True)
+def mypy(s: nox.Session, /) -> None:
+    """Run mypy."""
+    s.run("mypy", "src", *s.posargs)
 
 
 # =============================================================================
 # Testing
 
 
-@nox.session
-def test(session: nox.Session, /) -> None:
+@session(uv_groups=["test"], reuse_venv=True)
+def test(s: nox.Session, /) -> None:
     """Run the tests."""
-    session.run("uv", "sync", "--group", "test")
-    session.run("uv", "run", "pytest", *session.posargs)
+    s.notify("pytest", posargs=s.posargs)
+
+
+@session(uv_groups=["test"], reuse_venv=True)
+def pytest(s: nox.Session, /) -> None:
+    """Run the tests."""
+    s.run("pytest", *s.posargs)
 
 
 # =============================================================================
 # Packaging
 
 
-@nox.session
+@session(uv_groups=["build"])
 def rm_build(_: nox.Session, /) -> None:
     """Remove the build directory."""
     build_path = DIR.joinpath("build")
@@ -75,8 +80,8 @@ def rm_build(_: nox.Session, /) -> None:
         shutil.rmtree(build_path)
 
 
-@nox.session
-def build(session: nox.Session, /) -> None:
+@session(uv_groups=["build"])
+def build(s: nox.Session, /) -> None:
     """Build an SDist and wheel."""
-    rm_build(session)
-    session.run("uv", "build", *session.posargs)
+    rm_build(s)
+    s.run("python", "-m", "build")

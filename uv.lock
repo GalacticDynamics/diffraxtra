@@ -23,6 +23,7 @@ constraints = [
     { name = "psutil", specifier = ">=6.1.1" },
     { name = "py", specifier = ">=1.11" },
     { name = "pycparser", specifier = ">=2.10" },
+    { name = "pyparsing", specifier = ">3.0.0" },
     { name = "scipy", specifier = ">=1.14" },
     { name = "tomli", specifier = ">=1.0" },
     { name = "wcwidth", specifier = ">=0.1.0" },

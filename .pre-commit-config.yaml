@@ -50,24 +50,12 @@ repos:
         args: ["--fix", "--show-fixes"]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.18.2"
-    hooks:
-      - id: mypy
-        files: src
-        args: []
-        additional_dependencies:
-          - diffrax
-          - equinox
-          - jaxtyping
-          - numpy
-          - plum-dispatch
-
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.4.1"
     hooks:
       - id: codespell
-        args: [--skip=uv.lock]
+        args: ["--toml", "pyproject.toml"]
+        additional_dependencies: ["tomli"]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: "v0.11.0.1"

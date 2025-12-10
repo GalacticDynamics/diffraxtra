@@ -11,16 +11,6 @@ nox.options.default_venv_backend = "uv"
 
 DIR = Path(__file__).parent.resolve()
 
-# =============================================================================
-# Check
-
-
-@session(reuse_venv=True)
-def check(s: nox.Session, /) -> None:
-    """Run all checks."""
-    lint(s)
-    test(s)
-
 
 # =============================================================================
 # Linting

@@ -43,38 +43,32 @@ Leave these alone — they are gated elsewhere:
 
 ## What changed → what to check
 
-| Change                                                      | Check                                                   |
-| ----------------------------------------------------------- | ------------------------------------------------------- |
-| `params`, `default_*`, or any literal default               | [Scraped defaults](#scraped-defaults)                   |
-| `__call__`'s signature or its `dfx.diffeqsolve(...)` call   | [Forwarding](#forwarding-to-diffeqsolve)                |
-| anything touching `max_steps`                               | [The `max_steps` sentinel](#the-max_steps-sentinel)     |
-| `interp.py`'s `__init__`, `evaluate`, or a property forward | [Shape bookkeeping](#shape-bookkeeping)                 |
-| a new or edited `from_` overload                            | [`from_` overloads](#from_-overloads)                   |
-| a new field on any `Module`                                 | [Fields and strict modules](#fields-and-strict-modules) |
-| docstring examples, `conftest.py`, `testpaths`, `skills/`   | [Tests are doctests](#tests-are-doctests)               |
-| `pyproject.toml` dependencies, `ci.yml`                     | [Versions and dependencies](#versions-and-dependencies) |
+| Change                                                      | Check                                                                 |
+| ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| `params`, `default_*`, or any literal default               | [Scraped defaults](#scraped-defaults)                                 |
+| `__call__`'s signature or its `dfx.diffeqsolve(...)` call   | [Forwarding](#forwarding-to-diffeqsolve)                              |
+| anything touching `max_steps` or `event`                    | [The MISSING sentinels](#the-missing-sentinels)                       |
+| `interp.py`'s `__init__`, `evaluate`, or a property forward | [Shape bookkeeping](#shape-bookkeeping)                               |
+| a new or edited `from_` overload                            | [`from_` overloads](#from_-overloads)                                 |
+| a new field on any `Module`                                 | [Fields and the abstract contract](#fields-and-the-abstract-contract) |
+| docstring examples, `conftest.py`, `testpaths`, `skills/`   | [Tests are doctests](#tests-are-doctests)                             |
+| `pyproject.toml` dependencies, `ci.yml`                     | [Versions and dependencies](#versions-and-dependencies)               |
 
 ## Scraped defaults
 
-[diffeq_abc.py](../../../src/diffraxtra/_src/diffeq_abc.py) takes
-`diffeqsolve`'s defaults from its signature rather than restating them:
-
-```py
-params = inspect.signature(dfx.diffeqsolve.__wrapped__).parameters
-```
+`diffeqsolve`'s defaults are read out of its signature at import time — see
+[AGENTS.md](../../../AGENTS.md#defaults-are-read-out-of-diffrax-at-import-time)
+for the mechanism and why it is an import-time failure mode. Two things to check
+in a diff:
 
 - **A literal default is a regression.** `saveat=dfx.SaveAt(t1=True)` written
   out by hand, or `max_steps: int | None = 4096`, silently forks from diffrax
   the next time upstream changes. New defaults come from `params[...]`.
-- `.__wrapped__` exists only because diffrax wraps `diffeqsolve` in
-  `eqx.filter_jit`. Any change here — a different unwrapping, a `getattr`
-  fallback, a new parameter name — is an import-time failure mode for the whole
-  package, so it deserves a note on which diffrax versions were checked, not
-  just "works on mine".
-- `default_stepsize_controller`, `default_max_steps` and `default_adjoint` are
-  re-exported from [diffeq.py](../../../src/diffraxtra/_src/diffeq.py)'s
-  `__all__`. Removing or renaming one is a public API break even though the file
-  is private.
+- The `default_*` names are in
+  [diffeq.py](../../../src/diffraxtra/_src/diffeq.py)'s `__all__`. Removing or
+  renaming one is a public API break even though the file is private.
+- A change to the scrape itself deserves a note on which diffrax versions were
+  checked, not just "works on mine".
 
 ## Forwarding to `diffeqsolve`
 
@@ -232,23 +226,12 @@ collected by sybil from [conftest.py](../../../conftest.py) over `README.md`,
 
 ## Versions and dependencies
 
-- **`diffrax>=0.6` is the floor**, and CI runs a `check_oldest` job with
-  `--resolution lowest-direct` ([ci.yml](../../../.github/workflows/ci.yml)). A
-  PR using a newer diffrax API has to raise the floor in `pyproject.toml`, not
-  just pass on the latest release. Minimum versions follow
-  [SPEC 0](https://scientific-python.org/specs/spec-0000/).
-- `src/` imports `jax`, `equinox`, `jaxtyping` and `numpy`, but
-  `[project.dependencies]` lists only `diffrax`, `plum-dispatch` and
-  `typing_extensions` — they arrive transitively. That is fine to leave alone,
-  but a PR that adds an import from a package _not_ in diffrax's own dependency
-  tree needs a real dependency entry.
-
-## Repo conventions
-
-- **`uv run` / `nox -s ...` for everything** — never bare `python`/`pytest`. See
-  [AGENTS.md](../../../AGENTS.md#essential-commands).
-- Commits use gitmoji plus conventional commits (`cz_gitmoji`); match the log.
-- Import aliases are enforced by ruff: `dfx`, `eqx`, `np`.
+CI runs a `check_oldest` job with `--resolution lowest-direct`, so a PR using a
+newer diffrax API has to raise the floor in `pyproject.toml` — passing on the
+latest release is not enough. `jax` and `numpy` are imported but undeclared
+(they arrive through diffrax); a new import from a package outside diffrax's own
+dependency tree needs a real entry. A new nox session needs a matching PEP-735
+dependency group, since the noxfile names one per session via `uv_groups=[...]`.
 
 ## Further reading
 

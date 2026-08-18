@@ -46,7 +46,6 @@ the ABC.
 | [\_src/diffeq.py](src/diffraxtra/_src/diffeq.py)         | `DiffEqSolver`: the `@final` concrete module, plus the `default_stepsize_controller` / `default_max_steps` / `default_adjoint` re-exports                                                                          |
 | [\_src/interp.py](src/diffraxtra/_src/interp.py)         | `AbstractVectorizedDenseInterpolation` and `VectorizedDenseInterpolation`: the batch-flattening `__init__`, the doubly-vmapped `evaluate`, the `DenseInterpolation` property forwards, and three `from_` overloads |
 | [conftest.py](conftest.py)                               | sybil collection, x64, and the `DIFFRAX_LT_070` skip machinery                                                                                                                                                     |
-| [noxfile.py](noxfile.py)                                 | the `nox-uv` sessions listed above                                                                                                                                                                                 |
 
 `__call__` is **two** methods: a `@dispatch`ed positional one on the class, and
 a keyword-only overload registered underneath as

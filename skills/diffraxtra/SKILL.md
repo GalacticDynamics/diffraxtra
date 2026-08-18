@@ -236,29 +236,17 @@ solve is jitted for you. Consequences worth knowing before you profile:
 
 ## Constructing a solver: `from_`
 
-`DiffEqSolver.from_` is a `plum`-dispatched classmethod that normalises the
-several things a caller might hand you into a `DiffEqSolver`. Use it in library
-code that accepts "a solver" loosely.
+`DiffEqSolver.from_` is a `plum`-dispatched classmethod that normalises a
+`DiffEqSolver`, a `dfx.AbstractSolver`, a `Mapping`, or an `eqx.Partial` into a
+`DiffEqSolver`. Use it in library code that accepts "a solver" loosely; the
+[README](../../README.md#diffeqsolver) has a worked example of each.
 
-```python
-import equinox as eqx
-
-from_solver = DiffEqSolver.from_(dfx.Dopri5())
-from_mapping = DiffEqSolver.from_({"solver": dfx.Dopri5()})
-from_partial = DiffEqSolver.from_(eqx.Partial(dfx.diffeqsolve, solver=dfx.Dopri5()))
-
-assert from_solver == from_mapping == from_partial
-assert DiffEqSolver.from_(from_solver) is from_solver  # identity, not a copy
-```
-
-`from_(DiffEqSolver)` requires an **exact** type match — a subclass instance
-passed to the base's `from_` raises `TypeError`, deliberately.
-`from_(eqx.Partial)` requires the partial to wrap `diffrax.diffeqsolve` itself,
-and takes only its keywords.
-
-`VectorizedDenseInterpolation.from_` mirrors this for
-`(VectorizedDenseInterpolation | dfx.DenseInterpolation | Mapping)`, with
-optional positional `batch_shape` and `y0_shape`.
+Three things the examples don't show: passing an existing instance returns it
+unchanged rather than copying; that overload requires an **exact** type match,
+so a subclass instance raises `TypeError`; and the `eqx.Partial` must wrap
+`diffrax.diffeqsolve` itself, contributing only its keywords.
+`VectorizedDenseInterpolation.from_` mirrors all of this, plus optional
+positional `batch_shape` and `y0_shape`.
 
 ## Writing your own solver type
 
@@ -270,6 +258,8 @@ make your own variant, subclass the **abstract** class — you inherit both
 ```python
 from dataclasses import KW_ONLY
 from typing import Any, final
+
+import equinox as eqx
 
 from diffraxtra import AbstractDiffEqSolver
 
@@ -329,8 +319,6 @@ compile-time constant everywhere it is used.
   scalar (using the wrapper as a control path, for instance) will not behave.
 - **`y0_shape` is stored but unused** by the library. It records the per-solve
   shape for your benefit; nothing validates it.
-- **No units, no unxt/quax integration.** There is a commented-out `quaxify` in
-  the source; it is not wired up. Strip units before solving.
 
 ## Troubleshooting
 
@@ -344,7 +332,6 @@ compile-time constant everywhere it is used.
 | `TypeError: unsupported operand type(s) for -`                         | `evaluate(t0, t1)` on a PyTree `y0`. Evaluate twice and combine yourself.                                                                    |
 | Recompiling on every call                                              | A new `max_steps` each time (static), or a fresh solver/controller object each time. Build the `DiffEqSolver` once.                          |
 | `TypeError: Cannot convert <class ...> to <class ...>`                 | `from_` on an instance of a different (sub)class. The identity overload requires `type(obj) is cls`.                                         |
-| `f32` where you expected `f64`                                         | diffraxtra does not touch JAX config. Set `jax.config.update("jax_enable_x64", True)` yourself, before solving.                              |
 
 ## Version notes
 

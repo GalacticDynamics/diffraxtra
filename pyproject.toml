@@ -214,6 +214,7 @@ constraint-dependencies = [
   "wcwidth>=0.1.0",
   "iniconfig>=0.1.0",
   "nest-asyncio>=0.1.0",
+  "nodeenv>=1.3.4",  # first version with a wheel; older sdists need pkg_resources
   "pickleshare>=0.7",
   "tomli>=1.0",
   "pycparser>=2.10",

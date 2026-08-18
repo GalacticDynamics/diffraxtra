@@ -52,6 +52,9 @@ class AbstractDiffEqSolver(eqx.Module):
     incompatible. In such cases, you can override the `max_steps` argument when
     calling the `DiffEqSolver` object.
 
+    For the first bullet, reuse the **terms** as well as the solver and pass
+    whatever varies through ``args`` -- see `AbstractDiffEqSolver.__call__`.
+
     """
 
     #: The solver for the differential equation.
@@ -126,6 +129,13 @@ class AbstractDiffEqSolver(eqx.Module):
 
             vectorize_interpolation: whether to vectorize the interpolation
                 using `VectorizedDenseInterpolation`.
+
+        Build ``terms`` once, outside the call:
+            Terms are static in this method's `equinox.filter_jit` cache key
+            and compare by identity, so a term rebuilt on each call recompiles
+            the integrator (~244 ms against ~0.41 ms on a scalar decay). Define
+            it once and route per-call data through ``args``; see "Build terms
+            once" in the README.
 
         """
         # Parse `max_steps`, allowing for it to be overridden.

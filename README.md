@@ -195,6 +195,35 @@ DiffEqSolver(
 For a full enumeration of the ways to construct a `DiffEqSolver` object, see
 `diffraxtra.DiffEqSolver.from_`.
 
+#### Build terms once
+
+`DiffEqSolver.__call__` is wrapped in `equinox.filter_jit`. A
+`diffrax.AbstractTerm` holds a plain Python function, so it lands in the
+_static_ half of the JIT cache key and compares by identity -- a term built
+inside the calling function is a new key every call, recompiling the whole
+integrator. On a scalar exponential decay that is ~244 ms per call against ~0.41
+ms.
+
+Define the term once and pass whatever varies through `args`:
+
+```pycon
+>>> TERM = dfx.ODETerm(lambda t, y, args: -args[0] * y)
+>>> solver = DiffEqSolver(dfx.Dopri5(),
+...                stepsize_controller=dfx.PIDController(rtol=1e-8, atol=1e-8))
+
+>>> soln = solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(1.0,))
+>>> round(float(soln.ys[-1]), 4)
+0.3679
+
+>>> soln = solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(5.0,))
+>>> round(float(soln.ys[-1]), 4)
+0.0067
+
+```
+
+If you suspect a solve is recompiling, `jax.config.jax_explain_cache_misses`
+reports which key changed.
+
 ### `VectorizedDenseInterpolation`
 
 Vectorized wrapper around a `diffrax.DenseInterpolation`

@@ -41,7 +41,9 @@ class DiffEqSolver(AbstractDiffEqSolver):  # pylint: disable=R0903,W0223
     ``max_steps``. Pre-configuring these objects can be useful when you want to:
 
     - repeatedly solve similar differential equations and can reuse the same
-       solver and associated settings.
+       solver and associated settings. Reuse the *terms* too, passing whatever
+       varies through ``args`` -- rebuilding them per call recompiles the
+       integrator; see `AbstractDiffEqSolver.__call__`.
     - pass the differential equation solver as an argument to a function.
 
     Note that for some `diffrax.SaveAt` options, `max_steps=None` can be

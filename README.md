@@ -210,9 +210,13 @@ Define the term once and pass whatever varies through `args`:
 >>> TERM = dfx.ODETerm(lambda t, y, args: -args[0] * y)
 >>> solver = DiffEqSolver(dfx.Dopri5(),
 ...                stepsize_controller=dfx.PIDController(rtol=1e-8, atol=1e-8))
->>> round(float(solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(1.0,)).ys[-1]), 4)
+
+>>> soln = solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(1.0,))
+>>> round(float(soln.ys[-1]), 4)
 0.3679
->>> round(float(solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(5.0,)).ys[-1]), 4)
+
+>>> soln = solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(5.0,))
+>>> round(float(soln.ys[-1]), 4)
 0.0067
 
 ```

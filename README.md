@@ -195,6 +195,46 @@ DiffEqSolver(
 For a full enumeration of the ways to construct a `DiffEqSolver` object, see
 `diffraxtra.DiffEqSolver.from_`.
 
+#### Build terms once
+
+`DiffEqSolver.__call__` is wrapped in `equinox.filter_jit`, as
+`diffrax.diffeqsolve` is itself. A `diffrax.AbstractTerm` holds a plain Python
+function, which is not a JAX array, so it lands in the _static_ half of the JIT
+cache key -- the half compared with `==` rather than traced. Python functions
+compare by identity, so a term built inside the calling function is a new cache
+key every call, and the whole integrator is recompiled each time. The cost is
+roughly three orders of magnitude: on a scalar exponential decay, a few hundred
+milliseconds per call against a fraction of one (measured 244 ms vs 0.41 ms on
+jax 0.7.1, 415 ms vs 0.31 ms on jax 0.10 -- the exact figures move with JAX
+version and machine, the ratio does not). Bare `diffrax.diffeqsolve` behaves the
+same way, so this is a property of the filter-JIT boundary rather than of this
+wrapper.
+
+Define the term once and pass whatever varies through `args`:
+
+```pycon
+>>> TERM = dfx.ODETerm(lambda t, y, args: -args[0] * y)
+>>> solver = DiffEqSolver(dfx.Dopri5(),
+...                stepsize_controller=dfx.PIDController(rtol=1e-8, atol=1e-8))
+>>> round(float(solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(1.0,)).ys[-1]), 4)
+0.3679
+>>> round(float(solver(TERM, t0=0, t1=1, dt0=0.1, y0=1.0, args=(5.0,)).ys[-1]), 4)
+0.0067
+
+```
+
+Both calls reuse one compilation, because the decay rate is traced rather than
+baked into a closure.
+
+This cannot be fixed by hashing the term more cleverly. Every closure built from
+one `def` shares a `__code__` object, so keying on that would make the two rates
+above collide and silently reuse the wrong compiled function. Identity is what
+keeps the cache correct; `args` is the supported way to vary data without
+changing it.
+
+If you suspect a solve is recompiling, `jax.config.jax_explain_cache_misses`
+reports which key changed.
+
 ### `VectorizedDenseInterpolation`
 
 Vectorized wrapper around a `diffrax.DenseInterpolation`

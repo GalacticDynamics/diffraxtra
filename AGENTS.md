@@ -6,12 +6,14 @@ behind a callable object, and `VectorizedDenseInterpolation`, which makes the
 `diffrax.DenseInterpolation` produced by a batched solve evaluable at
 arbitrarily-shaped arrays of times.
 
+The design goal is to extend diffrax without diverging from it: follow diffrax's
+own API conventions, keep dependencies minimal, and keep every object a PyTree
+that survives `jit`, `vmap` and `grad`. When in doubt, do what diffrax does.
+
 For _using_ diffraxtra from outside this repo — the shape contract, the two call
 forms, the `from_` constructors, subclassing the ABCs — read
 [skills/diffraxtra/SKILL.md](skills/diffraxtra/SKILL.md). This file is for
 working inside the repo.
-[.github/copilot-instructions.md](.github/copilot-instructions.md) covers the
-same ground at a higher level for GitHub Copilot.
 
 ## Essential Commands
 
@@ -43,6 +45,8 @@ the ABC.
 | [\_src/diffeq_abc.py](src/diffraxtra/_src/diffeq_abc.py) | `AbstractDiffEqSolver`: the five `AbstractVar` fields, the plum-dispatched `__call__` pair that forwards to `dfx.diffeqsolve`, the `params` signature scrape, and four `from_` overloads                           |
 | [\_src/diffeq.py](src/diffraxtra/_src/diffeq.py)         | `DiffEqSolver`: the `@final` concrete module, plus the `default_stepsize_controller` / `default_max_steps` / `default_adjoint` re-exports                                                                          |
 | [\_src/interp.py](src/diffraxtra/_src/interp.py)         | `AbstractVectorizedDenseInterpolation` and `VectorizedDenseInterpolation`: the batch-flattening `__init__`, the doubly-vmapped `evaluate`, the `DenseInterpolation` property forwards, and three `from_` overloads |
+| [conftest.py](conftest.py)                               | sybil collection, x64, and the `DIFFRAX_LT_070` skip machinery                                                                                                                                                     |
+| [noxfile.py](noxfile.py)                                 | the `nox-uv` sessions listed above                                                                                                                                                                                 |
 
 `__call__` is **two** methods: a `@dispatch`ed positional one on the class, and
 a keyword-only overload registered underneath as
@@ -150,8 +154,6 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
   troubleshooting
 - [.github/skills/code-review/SKILL.md](.github/skills/code-review/SKILL.md) —
   what to look for when reviewing a diffraxtra change
-- [.github/copilot-instructions.md](.github/copilot-instructions.md) — the
-  higher-level project overview Copilot reads
 - [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) — environment setup
 - [README.md](README.md) — install and quick start
 - [diffrax docs](https://docs.kidger.site/diffrax/) — the library being extended

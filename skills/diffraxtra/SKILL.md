@@ -57,6 +57,9 @@ assert soln.evaluate(jnp.array([0.1, 0.2, 0.3, 0.4]).reshape(2, 2)).shape == (2,
 diffrax's, minus the three arguments the object already holds
 (`solver`/`stepsize_controller`/`adjoint`), plus `vectorize_interpolation`.
 
+The examples below run in sequence and reuse `term`, `saveat`, `solver` and
+`pid` from here, except where a block re-imports for itself.
+
 ## The shape contract
 
 This is the thing to get right. `evaluate` returns
@@ -195,14 +198,13 @@ call:
 event = dfx.Event(lambda t, y, args, **kw: y - 0.5)  # stop when y crosses 0.5
 stopping = DiffEqSolver(dfx.Dopri5(), stepsize_controller=pid, event=event)
 
-assert stopping(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0, saveat=t1_only).ts < 3.0
-assert (
-    stopping(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0, saveat=t1_only, event=None).ts
-    == 3.0
-)
-assert (
-    solver(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0, saveat=t1_only, event=event).ts < 3.0
-)
+stopped = stopping(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0, saveat=t1_only)
+disabled = stopping(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0, saveat=t1_only, event=None)
+one_off = solver(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0, saveat=t1_only, event=event)
+
+assert float(stopped.ts[0]) < 3.0  # terminated early
+assert float(disabled.ts[0]) == 3.0  # ran to t1
+assert float(one_off.ts[0]) < 3.0  # event supplied per-call
 ```
 
 `max_steps=None` means unbounded, which some `SaveAt` options reject:
@@ -259,6 +261,7 @@ make your own variant, subclass the **abstract** class — you inherit both
 from dataclasses import KW_ONLY
 from typing import Any, final
 
+import diffrax as dfx
 import equinox as eqx
 
 from diffraxtra import AbstractDiffEqSolver
@@ -281,7 +284,8 @@ class TightSolver(AbstractDiffEqSolver):
 
 
 tight = TightSolver(dfx.Dopri5())
-assert tight(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0).ys.shape == (1,)
+decay = dfx.ODETerm(lambda t, y, args: -y)
+assert tight(decay, t0=0.0, t1=3.0, dt0=0.1, y0=1.0).ys.shape == (1,)
 assert isinstance(TightSolver.from_(dfx.Dopri5()), TightSolver)  # inherited
 ```
 
@@ -308,10 +312,11 @@ compile-time constant everywhere it is used.
 
   ```py
   soln = solver(pytree_term, ..., y0={"a": 1.0}, vectorize_interpolation=True)
-  soln.evaluate(ts)  # fine: {'a': (4,)}
-  soln.evaluate(
-      ts, 0.0
-  )  # TypeError: unsupported operand type(s) for -: 'dict' and 'dict'
+  t0, t1 = ts, 0.0
+
+  soln.evaluate(t0)  # fine: {'a': (4,)}
+  soln.evaluate(t0, t1)  # -> evaluate(t1) - evaluate(t0)
+  # TypeError: unsupported operand type(s) for -: 'dict' and 'dict'
   ```
 
 - **`t0` and `t1` are batched arrays**, of shape `batch_shape` — not the scalars

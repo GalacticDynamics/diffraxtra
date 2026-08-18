@@ -145,7 +145,7 @@ filterwarnings = [
   "ignore:jax.interpreters.batching.NotMapped is deprecated:DeprecationWarning",
 ]
 log_cli_level = "INFO"
-testpaths = ["README.md", "src/", "tests/"]
+testpaths = ["README.md", "src/", "skills/", "tests/"]
 norecursedirs = [
   ".*",          # ignores .hypothesis, .git, etc.
   "__pycache__"

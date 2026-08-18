@@ -24,8 +24,9 @@
   ]
   dynamic = ["version"]
   dependencies = [
-    "diffrax>=0.6",
-    "plum-dispatch>=2.5.1",
+    "diffrax>=0.7.2",
+    "equinox>=0.13.8",
+    "plum-dispatch>=2.5.7",
     "typing_extensions>=4.12.2",
 ]
 
@@ -51,9 +52,9 @@
   nox = ["nox>=2024.10.9"]
   test = [
     "attrs",
-    "pytest >=6",
-    "pytest-cov >=3",
-    "sybil",
+    "pytest >=8",
+    "pytest-cov >=5",
+    "sybil >=9",
   ]
 
 [tool.hatch]
@@ -66,7 +67,7 @@
 
 
 [tool.pytest.ini_options]
-  minversion = "6.0"
+  minversion = "8.0"
   addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
   xfail_strict = true
   filterwarnings = [

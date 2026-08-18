@@ -191,7 +191,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         ts=f64[1,4097],
         ts_size=weak_i64[1],
         infos={'k': f64[1,4096,7], 'y0': f64[1,4096], 'y1': f64[1,4096]},
-        interpolation_cls=<class 'diffrax._solver.dopri5._Dopri5Interpolation'>,
+        interpolation_cls=diffrax._solver.dopri5._Dopri5Interpolation,
         direction=weak_i64[1],
         t0_if_trivial=f64[1],
         y0_if_trivial=f64[1]
@@ -271,7 +271,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
       ts=f64[3,4097],
       ts_size=weak_i64[3],
       infos={'k': f64[3,4096,7], 'y0': f64[3,4096], 'y1': f64[3,4096]},
-      interpolation_cls=<class 'diffrax._solver.dopri5._Dopri5Interpolation'>,
+      interpolation_cls=diffrax._solver.dopri5._Dopri5Interpolation,
       direction=weak_i64[3],
       t0_if_trivial=f64[3],
       y0_if_trivial=f64[3]

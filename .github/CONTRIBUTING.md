@@ -18,8 +18,7 @@ specific jobs:
 
 ```console
 $ nox -s lint  # Lint only
-$ nox -s tests  # Python tests
-$ nox -s docs -- --serve  # Build and serve the docs
+$ nox -s test  # Python tests
 $ nox -s build  # Make an SDist and wheel
 ```
 

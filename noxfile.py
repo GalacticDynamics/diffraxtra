@@ -49,12 +49,6 @@ def mypy(s: nox.Session, /) -> None:
 @session(uv_groups=["test"], reuse_venv=True)
 def test(s: nox.Session, /) -> None:
     """Run the tests."""
-    s.notify("pytest", posargs=s.posargs)
-
-
-@session(uv_groups=["test"], reuse_venv=True)
-def pytest(s: nox.Session, /) -> None:
-    """Run the tests."""
     s.run("pytest", *s.posargs)
 
 
@@ -62,7 +56,6 @@ def pytest(s: nox.Session, /) -> None:
 # Packaging
 
 
-@session(uv_groups=["build"])
 def rm_build(_: nox.Session, /) -> None:
     """Remove the build directory."""
     build_path = DIR.joinpath("build")

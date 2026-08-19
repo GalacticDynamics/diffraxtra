@@ -13,18 +13,12 @@ __all__ = [
 ]
 
 from dataclasses import KW_ONLY
-from typing import Any, TypeAlias, final
+from typing import Any, final
 
 import diffrax as dfx
 import equinox as eqx
-import numpy as np
-from jaxtyping import Array, ArrayLike, Bool, Real
 
 from .diffeq_abc import AbstractDiffEqSolver, params
-
-RealSz0Like: TypeAlias = Real[int | float | Array | np.ndarray[Any, Any], ""]
-BoolSz0Like: TypeAlias = Bool[ArrayLike, ""]
-
 
 default_stepsize_controller = params["stepsize_controller"].default
 default_max_steps = params["max_steps"].default

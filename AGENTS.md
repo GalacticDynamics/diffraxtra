@@ -19,7 +19,7 @@ working inside the repo.
 
 ```bash
 uv run pytest                # the whole suite (almost entirely doctests)
-uv run nox -s test           # the same, in an isolated env (chains to `pytest`)
+uv run nox -s test           # the same, in an isolated env
 uv run nox -s lint           # chains to `precommit`, `pylint`, and `mypy`
 uv run nox -s precommit      # pre-commit on all files
 uv run nox -s pylint         # pylint over src/

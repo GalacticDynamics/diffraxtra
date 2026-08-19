@@ -65,7 +65,7 @@ The examples below run in sequence and reuse `term`, `saveat`, `solver` and
 This is the thing to get right. `evaluate` returns
 
 ```text
-(*interp.batch_shape, *jnp.shape(t), *interp.y0_shape)
+(*interp.batch_shape, *jnp.shape(t), *y0.shape)
 ```
 
 — batch dimensions first, then the shape of the times you passed, then the shape
@@ -97,7 +97,6 @@ sol = solve(jnp.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]))  # 3 solves of a 2-
 interp = VectorizedDenseInterpolation(sol.interpolation)
 
 assert interp.batch_shape == (3,)
-assert interp.y0_shape == (2,)
 
 ts = jnp.linspace(0.0, 3.0, 4)
 assert interp.evaluate(1.0).shape == (3, 2)  # (*batch, *y0)
@@ -105,6 +104,7 @@ assert interp.evaluate(ts).shape == (3, 4, 2)  # (*batch, *t, *y0)
 assert interp.evaluate(ts.reshape(2, 2)).shape == (3, 2, 2, 2)  # (*batch, 2, 2, *y0)
 ```
 
+The `y0` shape is not stored; it falls out of the interpolation's own leaves.
 `batch_shape` is inferred from `jnp.shape(scalar_interpolation.t0_if_trivial)` —
 i.e. from the solve's own batching, **not** from the shape of `y0`. An unbatched
 solve of a vector `y0` has `batch_shape == ()`.
@@ -247,8 +247,8 @@ Three things the examples don't show: passing an existing instance returns it
 unchanged rather than copying; that overload requires an **exact** type match,
 so a subclass instance raises `TypeError`; and the `eqx.Partial` must wrap
 `diffrax.diffeqsolve` itself, contributing only its keywords.
-`VectorizedDenseInterpolation.from_` mirrors all of this, plus optional
-positional `batch_shape` and `y0_shape`.
+`VectorizedDenseInterpolation.from_` mirrors all of this, plus an optional
+positional `batch_shape`.
 
 ## Writing your own solver type
 
@@ -322,15 +322,13 @@ compile-time constant everywhere it is used.
 - **`t0` and `t1` are batched arrays**, of shape `batch_shape` — not the scalars
   a `diffrax.AbstractPath` normally has. Diffrax code that assumes they are
   scalar (using the wrapper as a control path, for instance) will not behave.
-- **`y0_shape` is stored but unused** by the library. It records the per-solve
-  shape for your benefit; nothing validates it.
 
 ## Troubleshooting
 
 | Symptom                                                                | Cause / fix                                                                                                                                  |
 | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `soln.evaluate(array_of_times)` fails on a normal diffrax solution     | That is plain `diffrax.DenseInterpolation` — one time at a time. Wrap it: `vectorize_interpolation=True` or `apply_to_solution`.             |
-| Output has one dimension too many or too few                           | Re-read the shape contract: `(*batch_shape, *t.shape, *y0_shape)`. A scalar `t` contributes nothing; an unbatched solve contributes nothing. |
+| Output has one dimension too many or too few                           | Re-read the shape contract: `(*batch_shape, *t.shape, *y0.shape)`. A scalar `t` contributes nothing; an unbatched solve contributes nothing. |
 | `vmap got inconsistent sizes for array axes to be mapped`              | A hand-passed `batch_shape` whose ndim doesn't match the solve's. Let it be inferred.                                                        |
 | `batch_shape == ()` on a solve you thought was batched                 | It is read from `t0_if_trivial`, so it reflects `vmap`ping the _solve_. A vector `y0` is not a batch.                                        |
 | `ValueError: max_steps=None is incompatible with saving at steps=True` | Pass a concrete `max_steps` for that call. The field is per-solver; the override is per-call.                                                |

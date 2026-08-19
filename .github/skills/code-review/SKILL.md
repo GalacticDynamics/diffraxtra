@@ -138,7 +138,7 @@ So: **a change to the flattening must be mirrored in `evaluate`, and vice
 versa.** The suspicious edits are anything that stops flattening in `__init__`,
 anything that lets `t0` reach the inner `vmap` with more than one dimension, and
 any new index literal (`x.shape[0]`, `x.shape[2:]`). None of these fail loudly —
-ask for a doctest asserting the full `(*batch_shape, *t.shape, *y0_shape)`
+ask for a doctest asserting the full `(*batch_shape, *t.shape, *y0.shape)`
 contract on a batched, non-scalar-`y0` example, since that is the only case
 where all three parts are non-empty.
 
@@ -149,9 +149,9 @@ Also in this file:
   `ts`, `ts_size`, `infos` and `y0_if_trivial` return the **flat** array
   unchanged. That inconsistency is existing behaviour — a new property should
   pick a side deliberately and document which.
-- `y0_shape` is currently stored and never read. A PR that starts consuming it
-  is relying on a value nothing validates; ask for validation at construction
-  first.
+- **The `y0` shape is deliberately not stored.** A `y0_shape` field existed
+  until v1.6.0 and was never read by anything, here or downstream. A PR
+  reintroducing per-solve shape metadata needs a caller, not just a getter.
 - `evaluate(t0, t1)` recurses into two full evaluations and subtracts. Watch for
   changes that assume `y` supports arithmetic (it may be a PyTree) or that
   double an already-expensive path.

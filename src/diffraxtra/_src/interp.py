@@ -38,9 +38,6 @@ class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):
     #: solver that produced this interpolation. E.g.
     batch_shape: eqx.AbstractVar[Shape]
 
-    #: The shape of the solution.
-    y0_shape: eqx.AbstractVar[PyTree[Shape, "Y"]]
-
     @property
     def batch_ndim(self) -> int:
         """The number of batch dimensions."""
@@ -199,8 +196,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         t0_if_trivial=f64[1],
         y0_if_trivial=f64[1]
       ),
-      batch_shape=(),
-      y0_shape=()
+      batch_shape=()
     )
 
     This can be evaluated by the normal means:
@@ -322,29 +318,16 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
     #: solver that produced this interpolation. E.g.
     batch_shape: Shape = eqx.field(converter=tuple)
 
-    #: The shape of the solution.
-    y0_shape: PyTree[Shape, "Y"]
-
     def __init__(
         self,
         scalar_interpolation: dfx.DenseInterpolation,
         batch_shape: Shape | None = None,
-        y0_shape: PyTree[Shape, "Y"] | None = None,  # type: ignore[name-defined]
     ) -> None:
         # Store the batch shape
         self.batch_shape = (
             jnp.shape(scalar_interpolation.t0_if_trivial)
             if batch_shape is None
             else batch_shape
-        )
-
-        # Store the shape of the solution
-        self.y0_shape = (
-            jax.tree.map(
-                lambda x: x.shape[self.batch_ndim :], scalar_interpolation.y0_if_trivial
-            )
-            if y0_shape is None
-            else y0_shape
         )
 
         # Flatten the batch shape of the interpolation
@@ -384,7 +367,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         >>> interp
         VectorizedDenseInterpolation(
             scalar_interpolation=DenseInterpolation( ... ),
-            batch_shape=(), y0_shape=()
+            batch_shape=()
         )
 
         Or from a `VectorizedDenseInterpolation`, returning the same object:
@@ -392,14 +375,14 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         >>> VectorizedDenseInterpolation.from_(interp) is interp
         True
 
-        The `batch_shape` and `y0_shape` can be specified manually:
+        The `batch_shape` can be specified manually:
 
         >>> interp = VectorizedDenseInterpolation.from_(
-        ...     soln.interpolation, (), ())
+        ...     soln.interpolation, ())
         >>> interp
         VectorizedDenseInterpolation(
             scalar_interpolation=DenseInterpolation( ... ),
-            batch_shape=(), y0_shape=()
+            batch_shape=()
         )
 
         Everything can be packaged in a `Mapping`:
@@ -409,7 +392,7 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
         >>> interp
         VectorizedDenseInterpolation(
             scalar_interpolation=DenseInterpolation( ... ),
-            batch_shape=(), y0_shape=()
+            batch_shape=()
         )
 
         """
@@ -463,8 +446,7 @@ def from_(
     cls: type[VectorizedDenseInterpolation],
     obj: dfx.DenseInterpolation,
     batch_shape: Any | None = None,
-    y0_shape: Any | None = None,
     /,
 ) -> VectorizedDenseInterpolation:
     """Construct from a `diffrax.DenseInterpolation`."""
-    return cls(obj, batch_shape, y0_shape)
+    return cls(obj, batch_shape)

@@ -120,10 +120,6 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
   on first construction. Adding an `AbstractVar` to `AbstractDiffEqSolver` is
   therefore a breaking change for every downstream subclass, deferred to
   runtime.
-- **`VectorizedDenseInterpolation.y0_shape` is computed, stored, and never
-  read.** Nothing in the package consumes it. It is public and has doctests, so
-  don't delete it casually — but don't assume it is validated or load-bearing
-  either.
 - **The `from_` overloads are module-bottom side effects.** They all shadow one
   name, so `# type: ignore[no-redef]` and ruff's `F811` ignore are load-bearing,
   not noise. Note the asymmetry: solver overloads register on the ABC

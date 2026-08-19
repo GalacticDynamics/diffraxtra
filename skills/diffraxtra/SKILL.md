@@ -65,7 +65,7 @@ The examples below run in sequence and reuse `term`, `saveat`, `solver` and
 This is the thing to get right. `evaluate` returns
 
 ```text
-(*interp.batch_shape, *jnp.shape(t), *y0.shape)
+(*interp.batch_shape, *jnp.shape(t), *jnp.shape(y0))
 ```
 
 — batch dimensions first, then the shape of the times you passed, then the shape
@@ -325,16 +325,16 @@ compile-time constant everywhere it is used.
 
 ## Troubleshooting
 
-| Symptom                                                                | Cause / fix                                                                                                                                  |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `soln.evaluate(array_of_times)` fails on a normal diffrax solution     | That is plain `diffrax.DenseInterpolation` — one time at a time. Wrap it: `vectorize_interpolation=True` or `apply_to_solution`.             |
-| Output has one dimension too many or too few                           | Re-read the shape contract: `(*batch_shape, *t.shape, *y0.shape)`. A scalar `t` contributes nothing; an unbatched solve contributes nothing. |
-| `vmap got inconsistent sizes for array axes to be mapped`              | A hand-passed `batch_shape` whose ndim doesn't match the solve's. Let it be inferred.                                                        |
-| `batch_shape == ()` on a solve you thought was batched                 | It is read from `t0_if_trivial`, so it reflects `vmap`ping the _solve_. A vector `y0` is not a batch.                                        |
-| `ValueError: max_steps=None is incompatible with saving at steps=True` | Pass a concrete `max_steps` for that call. The field is per-solver; the override is per-call.                                                |
-| `TypeError: unsupported operand type(s) for -`                         | `evaluate(t0, t1)` on a PyTree `y0`. Evaluate twice and combine yourself.                                                                    |
-| Recompiling on every call                                              | A new `max_steps` each time (static), or a fresh solver/controller object each time. Build the `DiffEqSolver` once.                          |
-| `TypeError: Cannot convert <class ...> to <class ...>`                 | `from_` on an instance of a different (sub)class. The identity overload requires `type(obj) is cls`.                                         |
+| Symptom                                                                | Cause / fix                                                                                                                                            |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `soln.evaluate(array_of_times)` fails on a normal diffrax solution     | That is plain `diffrax.DenseInterpolation` — one time at a time. Wrap it: `vectorize_interpolation=True` or `apply_to_solution`.                       |
+| Output has one dimension too many or too few                           | Re-read the shape contract: `(*batch_shape, *jnp.shape(t), *jnp.shape(y0))`. A scalar `t` contributes nothing; an unbatched solve contributes nothing. |
+| `vmap got inconsistent sizes for array axes to be mapped`              | A hand-passed `batch_shape` whose ndim doesn't match the solve's. Let it be inferred.                                                                  |
+| `batch_shape == ()` on a solve you thought was batched                 | It is read from `t0_if_trivial`, so it reflects `vmap`ping the _solve_. A vector `y0` is not a batch.                                                  |
+| `ValueError: max_steps=None is incompatible with saving at steps=True` | Pass a concrete `max_steps` for that call. The field is per-solver; the override is per-call.                                                          |
+| `TypeError: unsupported operand type(s) for -`                         | `evaluate(t0, t1)` on a PyTree `y0`. Evaluate twice and combine yourself.                                                                              |
+| Recompiling on every call                                              | A new `max_steps` each time (static), or a fresh solver/controller object each time. Build the `DiffEqSolver` once.                                    |
+| `TypeError: Cannot convert <class ...> to <class ...>`                 | `from_` on an instance of a different (sub)class. The identity overload requires `type(obj) is cls`.                                                   |
 
 ## Version notes
 

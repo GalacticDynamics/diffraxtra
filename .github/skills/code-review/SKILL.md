@@ -138,9 +138,10 @@ So: **a change to the flattening must be mirrored in `evaluate`, and vice
 versa.** The suspicious edits are anything that stops flattening in `__init__`,
 anything that lets `t0` reach the inner `vmap` with more than one dimension, and
 any new index literal (`x.shape[0]`, `x.shape[2:]`). None of these fail loudly —
-ask for a doctest asserting the full `(*batch_shape, *t.shape, *y0.shape)`
-contract on a batched, non-scalar-`y0` example, since that is the only case
-where all three parts are non-empty.
+ask for a doctest asserting the full
+`(*batch_shape, *jnp.shape(t), *jnp.shape(y0))` contract on a batched,
+non-scalar-`y0` example, since that is the only case where all three parts are
+non-empty.
 
 Also in this file:
 

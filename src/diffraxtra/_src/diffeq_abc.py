@@ -233,10 +233,8 @@ def from_(
 
     >>> solver = DiffEqSolver.from_(dfx.Dopri5())
 
-    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
-
     >>> solver
-    DiffEqSolver(solver=Dopri5())
+    DiffEqSolver(...solver=Dopri5(...)...)
 
     """
     return cls(scheme, **kwargs)
@@ -256,12 +254,9 @@ def from_(
     >>> solver = DiffEqSolver.from_({"solver": dfx.Dopri5(),
     ...       "stepsize_controller": dfx.PIDController(rtol=1e-5, atol=1e-5)})
 
-    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
-
     >>> solver
-    DiffEqSolver(
-      solver=Dopri5(), stepsize_controller=PIDController(rtol=1e-05, atol=1e-05)
-    )
+    DiffEqSolver(...solver=Dopri5(...)...
+                 stepsize_controller=PIDController(...rtol=1e-05, atol=1e-05...)...)
 
     """
     return cls(**obj)
@@ -286,10 +281,8 @@ def from_(
 
     >>> solver = DiffEqSolver.from_(partial)
 
-    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
-
     >>> solver
-    DiffEqSolver(solver=Dopri5())
+    DiffEqSolver(...solver=Dopri5(...)...)
 
     """
     obj = eqx.error_if(

@@ -211,13 +211,13 @@ collected by sybil from [conftest.py](../../../conftest.py) over `README.md`,
   runnable example accidentally fenced ` ```py ` is a test that never runs; a
   deliberately-failing example fenced ` ```python ` breaks CI. Claims in that
   file only become tests when written as `assert`.
-- **A repr-printing example needs a version guard.** diffrax 0.6 and 0.7 print
-  different `repr`s, and CI tests both. `conftest.py` exposes `DIFFRAX_LT_070`
-  in the sybil namespace for `.. skip: next if(DIFFRAX_LT_070, reason="...")`
-  directives in `src/` docstrings; `README.md` can't use those, so
-  `pytest_collection_modifyitems` drops **every** README item when diffrax <
-  0.7. A new `>>> obj` example printing a diffrax repr without the skip
-  directive passes locally and fails the `check_oldest` job.
+- **A repr-printing example must elide what diffrax owns.** diffrax 0.6 and 0.7
+  print different `repr`s and CI tests both, so a pasted-verbatim `repr` passes
+  locally and fails the `check_oldest` job. Put `...` over the varying tokens —
+  field ordering, whether default-valued fields print at all, `weak_i64` vs
+  `i64`, `<class '...'>` vs the bare dotted path — and keep the assertion exact
+  on diffraxtra's own values. Reach for a skip directive only if a value cannot
+  be elided; there are currently none in the repo.
 - `conftest.py` enables x64, which is why examples print `f64[…]`.
 - `filterwarnings = ["error"]` — a change that introduces a warning fails the
   suite, including a warning from a newer diffrax.

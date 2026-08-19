@@ -183,16 +183,14 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
     ...     stepsize_controller=stepsize_controller)
     >>> interp = VectorizedDenseInterpolation(sol.interpolation)
 
-    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
-
     >>> interp
     VectorizedDenseInterpolation(
       scalar_interpolation=DenseInterpolation(
         ts=f64[1,4097],
-        ts_size=weak_i64[1],
+        ts_size=...i64[1],
         infos={'k': f64[1,4096,7], 'y0': f64[1,4096], 'y1': f64[1,4096]},
-        interpolation_cls=diffrax._solver.dopri5._Dopri5Interpolation,
-        direction=weak_i64[1],
+        interpolation_cls=..._Dopri5Interpolation...,
+        direction=...i64[1],
         t0_if_trivial=f64[1],
         y0_if_trivial=f64[1]
       ),
@@ -266,15 +264,13 @@ class VectorizedDenseInterpolation(AbstractVectorizedDenseInterpolation):
     Let's inspect the rest of the API. First, the flattened) original
     interpolation
 
-    .. skip: next if(DIFFRAX_LT_070, reason="diffrax < 0.7 has different repr")
-
     >>> interp.scalar_interpolation
     DenseInterpolation(
       ts=f64[3,4097],
-      ts_size=weak_i64[3],
+      ts_size=...i64[3],
       infos={'k': f64[3,4096,7], 'y0': f64[3,4096], 'y1': f64[3,4096]},
-      interpolation_cls=diffrax._solver.dopri5._Dopri5Interpolation,
-      direction=weak_i64[3],
+      interpolation_cls=..._Dopri5Interpolation...,
+      direction=...i64[3],
       t0_if_trivial=f64[3],
       y0_if_trivial=f64[3]
     )

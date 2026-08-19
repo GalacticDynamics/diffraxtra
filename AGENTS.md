@@ -45,7 +45,7 @@ the ABC.
 | [\_src/diffeq_abc.py](src/diffraxtra/_src/diffeq_abc.py) | `AbstractDiffEqSolver`: the five `AbstractVar` fields, the plum-dispatched `__call__` pair that forwards to `dfx.diffeqsolve`, the `params` signature scrape, and four `from_` overloads                           |
 | [\_src/diffeq.py](src/diffraxtra/_src/diffeq.py)         | `DiffEqSolver`: the `@final` concrete module, plus the `default_stepsize_controller` / `default_max_steps` / `default_adjoint` re-exports                                                                          |
 | [\_src/interp.py](src/diffraxtra/_src/interp.py)         | `AbstractVectorizedDenseInterpolation` and `VectorizedDenseInterpolation`: the batch-flattening `__init__`, the doubly-vmapped `evaluate`, the `DenseInterpolation` property forwards, and three `from_` overloads |
-| [conftest.py](conftest.py)                               | sybil collection, x64, and the `DIFFRAX_LT_070` skip machinery                                                                                                                                                     |
+| [conftest.py](conftest.py)                               | sybil collection and x64                                                                                                                                                                                           |
 
 `__call__` is **two** methods: a `@dispatch`ed positional one on the class, and
 a keyword-only overload registered underneath as
@@ -88,13 +88,12 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
   MyST parser as plain code, so a claim made there only becomes a test if you
   write it as an `assert`. Fence a block ` ```py ` to have it collected but not
   run — use that for examples that are meant to fail or are pseudocode.
-- **diffrax 0.6 and 0.7 print different `repr`s**, and the suite handles this in
-  two different ways. `conftest.py` computes `DIFFRAX_LT_070` and puts it in the
-  sybil namespace, so a `src/` docstring can guard one example with
-  `.. skip: next if(DIFFRAX_LT_070, reason="...")`; `README.md` is not guardable
-  that way, so `pytest_collection_modifyitems` **drops every README.md item
-  wholesale** when diffrax < 0.7. A repr-printing example added to `src/` needs
-  the skip directive, or CI's oldest-dependency job goes red.
+- **diffrax 0.6 and 0.7 print different `repr`s**, and CI tests both. Nothing is
+  skipped for it: the examples elide the parts diffrax owns — field ordering,
+  whether defaults are printed, `weak_i64` vs `i64`, `<class '...'>` vs the bare
+  path — with `...` under `ELLIPSIS`, and stay exact on what diffraxtra owns. A
+  new example that pastes a diffrax `repr` verbatim passes locally and fails
+  CI's oldest-dependency job; elide the varying tokens instead of guarding it.
 - x64 is enabled in `conftest.py`, which is why the examples print `f64[…]`.
 - `filterwarnings = ["error"]` — a new warning anywhere is a test failure.
 - Output is matched with `ELLIPSIS | NORMALIZE_WHITESPACE`; that is what makes

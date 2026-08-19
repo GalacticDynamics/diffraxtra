@@ -172,7 +172,7 @@ From a `diffrax.AbstractSolver` object.
 ```pycon
 >>> solver = DiffEqSolver.from_(dfx.Dopri5())
 >>> solver
-DiffEqSolver(solver=Dopri5())
+DiffEqSolver(...solver=Dopri5(...)...)
 
 ```
 
@@ -185,9 +185,8 @@ From a `collections.abc.Mapping`
 >>> solver = DiffEqSolver.from_({"solver": dfx.Dopri5(),
 ...       "stepsize_controller": dfx.PIDController(rtol=1e-5, atol=1e-5)})
 >>> solver
-DiffEqSolver(
-  solver=Dopri5(), stepsize_controller=PIDController(rtol=1e-05, atol=1e-05)
-)
+DiffEqSolver(...solver=Dopri5(...)...
+             stepsize_controller=PIDController(...rtol=1e-05, atol=1e-05...)...)
 
 ```
 
@@ -225,10 +224,10 @@ We'll start with a non-batched interpolation:
 VectorizedDenseInterpolation(
   scalar_interpolation=DenseInterpolation(
     ts=f64[1,4097],
-    ts_size=weak_i64[1],
+    ts_size=...i64[1],
     infos={'k': f64[1,4096,7], 'y0': f64[1,4096], 'y1': f64[1,4096]},
-    interpolation_cls=diffrax._solver.dopri5._Dopri5Interpolation,
-    direction=weak_i64[1],
+    interpolation_cls=..._Dopri5Interpolation...,
+    direction=...i64[1],
     t0_if_trivial=f64[1],
     y0_if_trivial=f64[1]
   ),

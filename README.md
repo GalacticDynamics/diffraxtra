@@ -53,8 +53,7 @@ print(soln)
 #   ys=f32[1],
 #   interpolation=VectorizedDenseInterpolation(
 #     scalar_interpolation=DenseInterpolation( ... ),
-#     batch_shape=(),
-#     y0_shape=()
+#     batch_shape=()
 #   ),
 #   ...
 # )
@@ -233,8 +232,7 @@ VectorizedDenseInterpolation(
     t0_if_trivial=f64[1],
     y0_if_trivial=f64[1]
   ),
-  batch_shape=(),
-  y0_shape=()
+  batch_shape=()
 )
 
 ```

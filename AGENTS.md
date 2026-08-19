@@ -139,14 +139,15 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
   `constraint-dependencies`.
 - **Commits use gitmoji** plus conventional commits (`cz_gitmoji`): `✨ feat:`,
   `🐛 fix:`, `📝 docs:`, `💥 boom:`. Match the existing log.
-- **`origin` is a fork; PRs land on `upstream`.** `origin` is
-  `nstarman/diffraxtra`, `upstream` is `GalacticDynamics/diffraxtra`, and `main`
-  moves fast. Run `git fetch upstream main` immediately before **each** push and
+- **When working from a fork, PRs land on `upstream`, not `origin`.** Check
+  `git remote -v` before assuming which is which, and note that `main` here
+  moves fast. Fetch the upstream `main` immediately before **each** push and
   `gh pr create` — not once per session — and rebase if
   `git rev-list --count HEAD..upstream/main` is non-zero. A stale checkout's
   `git log` looks perfectly healthy, so staleness is invisible without the
   fetch. When asked to fix a "pre-existing failure on `main`", reproduce it
-  against freshly-fetched `upstream/main` first: it may already be fixed there.
+  against a freshly-fetched upstream `main` first: it may already be fixed
+  there.
 - **Import aliases are enforced by ruff**: `dfx`, `eqx`, `np`. Fields are
   documented with `#:` comments above them, not docstrings below. pylint runs
   over `src/`, so a few `# pylint: disable=` comments are load-bearing too.

@@ -132,10 +132,22 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
 - **`jax` and `numpy` are imported in `src/` but not declared** in
   `[project.dependencies]` (which lists `diffrax`, `equinox`, `jaxtyping`,
   `plum-dispatch`, `typing_extensions`). They arrive transitively.
-- **CI runs `--resolution lowest-direct`**, so new code must work on
-  `diffrax>=0.6`, not just the newest release.
+- **CI runs `--resolution lowest`**, so new code must work on `diffrax>=0.6`,
+  not just the newest release. Because that lowers _transitive_ deps too, a
+  dependency that only publishes an old sdist can break the job during install,
+  before a single test runs — hence the transitive lower bounds in
+  `constraint-dependencies`.
 - **Commits use gitmoji** plus conventional commits (`cz_gitmoji`): `✨ feat:`,
   `🐛 fix:`, `📝 docs:`, `💥 boom:`. Match the existing log.
+- **When working from a fork, PRs land on `upstream`, not `origin`.** Check
+  `git remote -v` before assuming which is which, and note that `main` here
+  moves fast. Fetch the upstream `main` immediately before **each** push and
+  `gh pr create` — not once per session — and rebase if
+  `git rev-list --count HEAD..upstream/main` is non-zero. A stale checkout's
+  `git log` looks perfectly healthy, so staleness is invisible without the
+  fetch. When asked to fix a "pre-existing failure on `main`", reproduce it
+  against a freshly-fetched upstream `main` first: it may already be fixed
+  there.
 - **Import aliases are enforced by ruff**: `dfx`, `eqx`, `np`. Fields are
   documented with `#:` comments above them, not docstrings below. pylint runs
   over `src/`, so a few `# pylint: disable=` comments are load-bearing too.

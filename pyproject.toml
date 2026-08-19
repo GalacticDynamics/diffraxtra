@@ -199,6 +199,12 @@ constraint-dependencies = [
   # Dependencies" job dies before collecting a single test. Dev tooling: its
   # floor says nothing about which dependencies this library supports.
   "nodeenv>=1.9.1",
+  # `build` depends on a bare, unbounded `pyproject_hooks`, so `--resolution
+  # lowest` picks 0.1.0 -- a 2021 release predating `BuildBackendHookCaller`,
+  # which `build` 1.x calls unconditionally, so `nox -s build` dies with an
+  # `AttributeError`. 1.0.0 is the first release with that API. Dev tooling: its
+  # floor says nothing about which dependencies this library supports.
+  "pyproject-hooks>=1.0.0",
   # Because IPyKernel doesn't constrain its dependencies
   "appnope>=0.1.4",
   "cffi>=1.17",

@@ -27,21 +27,8 @@ def lint(s: nox.Session, /) -> None:
 
 @session(uv_groups=["lint"], reuse_venv=True)
 def precommit(s: nox.Session, /) -> None:
-    """Run the pre-commit hooks."""
-    # no-commit-to-branch guards a human's local `git commit`/`git push`,
-    # not a manual "run every hook over all files" invocation like this
-    # one -- which CI also runs on every push to `main`, where it would
-    # otherwise always fail. Skipped here (locally or in CI); the
-    # installed git hook still catches the real case. Add it to any SKIP
-    # a caller already set, rather than clobbering it.
-    skip = ",".join(filter(None, [os.environ.get("SKIP"), "no-commit-to-branch"]))
-    s.run(
-        "pre-commit",
-        "run",
-        "--all-files",
-        *s.posargs,
-        env={"SKIP": skip},
-    )
+    """Run prek."""
+    s.run("prek", "run", "--all-files", *s.posargs)
 
 
 @session(uv_groups=["lint"], reuse_venv=True)

@@ -57,7 +57,7 @@ build = [
 ]
 lint = [
   "mypy>=1.19.0",
-  "pre-commit>=4.1.0",
+  "prek>=0.5.3",
   "pylint>=3.3.8",
 ]
 nox = [

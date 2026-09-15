@@ -193,12 +193,14 @@ src = ["src"]
 
 [tool.uv]
 constraint-dependencies = [
-  # `pre-commit` allows any `nodeenv>=0.11.1`, and 0.11.1 is a 2012 sdist whose
-  # `setup.py` imports `pkg_resources` at build time -- long gone from modern
-  # setuptools, so `--resolution lowest` cannot build it and the "Check Oldest
-  # Dependencies" job dies before collecting a single test. Dev tooling: its
-  # floor says nothing about which dependencies this library supports.
-  "nodeenv>=1.9.1",
+  # `commitizen` (pulled in via `cz-conventional-gitmoji`) allows any bare
+  # `pyyaml`, and `--resolution lowest` picks 3.10 -- a 2013 sdist that fails
+  # to build against modern CPython's C API (`PyCode_New`'s signature
+  # changed, `PyFrameObject` is now an incomplete type). `pre-commit` used to
+  # mask this by requiring `pyyaml>=5.1`; switching it out for `prek` removed
+  # that floor. Dev tooling: its floor says nothing about which dependencies
+  # this library supports.
+  "pyyaml>=5.1",
   # `build` depends on a bare, unbounded `pyproject_hooks`, so `--resolution
   # lowest` picks 0.1.0 -- a 2021 release predating `BuildBackendHookCaller`,
   # which `build` 1.x calls unconditionally, so `nox -s build` dies with an

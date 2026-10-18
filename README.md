@@ -18,6 +18,8 @@
 
 Extras for [diffrax][diffrax-link].
 
+- `subsample`: shrink dense solution storage, preserving the original curve when
+  accepted steps fit and resampling with cubic Hermite interpolation otherwise.
 - `DiffEqSolver`: an object-oriented interface to `diffrax.diffeqsolve`.
 - `VectorizedDenseInterpolation`: a vectorized form of
   `diffrax.DenseInterpolation` that works on batched results from
@@ -328,6 +330,50 @@ Array([[[1.   , 0.368],
 >>> ys.shape  # (batch, *times)
 (3, 2, 2)
 
+```
+
+### `subsample`
+
+Reduce the dense interpolation buffers after solving:
+
+```python
+from diffraxtra import subsample
+
+# `soln` was computed with SaveAt(dense=True).
+compact = subsample(soln, max_steps=4)
+compact.evaluate(0.5)
+```
+
+A budget at or above the current capacity leaves the interpolation unchanged. If
+all accepted steps fit in `max_steps`, the original knots and solver
+interpolation are preserved exactly and unused padding is trimmed. Otherwise,
+the original dense curve's values and derivatives are sampled at `max_steps + 1`
+uniformly spaced times and fitted with cubic Hermite pieces. These match the
+original curve at sampling knots, including both endpoints; between knots they
+introduce approximation error. Increase `max_steps` and check convergence for
+your application. Solver tolerances do not bound this additional error. Use this
+for smooth ODEs; jumps and stochastic paths are not preserved by resampling.
+
+The returned object is still a `diffrax.Solution`. `eqx.tree_at` replaces only
+its interpolation; saved `ts`, `ys`, solver state, and statistics retain their
+original meaning. In particular, `stats["max_steps"]` describes the original
+solve. The original solution is unchanged. Release it when you no longer need
+its dense buffers. Saved step arrays (`SaveAt(steps=True)`) are not compacted.
+
+Both paths use a common packed coefficient buffer with capacity proportional to
+`max_steps`, allowing the choice to happen under JIT, including mixed batches
+where some solutions trim and others resample. Bytes per interval depend on the
+original solver's coefficient layout. `max_steps` must be a static positive
+integer under JIT. PyTree states, backward solves, and
+`VectorizedDenseInterpolation` are supported. Apply `jax.vmap` to compact an
+ordinary batch of dense solutions.
+
+See [the runnable galax orbit example](examples/subsample_orbits.py) for a
+harmonic orbit and an eccentric Kepler orbit, with storage measurements and
+interpolation convergence checks. It additionally requires galax and matplotlib:
+
+```bash
+python examples/subsample_orbits.py --output /tmp/subsample-orbits.png
 ```
 
 ## Citation

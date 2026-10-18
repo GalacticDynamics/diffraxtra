@@ -1,29 +1,67 @@
-"""Compare dense storage and interpolation error for two galax potentials.
+"""Compare dense storage and interpolation error for two analytic potentials.
 
-Run with galax, matplotlib, and this checkout of diffraxtra installed::
+Run with matplotlib and this checkout of diffraxtra installed::
 
-    python examples/subsample_orbits.py --output /tmp/subsample-orbits.png
+    uv run --with matplotlib python examples/subsample_orbits.py
 
-The ODE uses kpc, Myr, and kpc/Myr, the galax galactic unit system. The
-reference is the original dense solution; plotted errors measure the extra
-error introduced by resampling, rather than the integration error itself.
+Positions use kpc, times Myr, and velocities kpc/Myr. Potential values are in
+kpc²/Myr². Plotted errors measure the additional error from subsampling,
+relative to the original dense solution.
 """
 
 import argparse
 import functools as ft
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import diffrax as dfx
 import equinox as eqx
-import galax.potential as gp
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
-import unxt as u
+from matplotlib.axes import Axes
 
 from diffraxtra import subsample
+
+Potential = Callable[[jax.Array], jax.Array]
+BUDGETS = (8, 16, 32, 64)
+
+
+def harmonic_potential(position: jax.Array, *, omega: float = 0.03) -> jax.Array:
+    """Return Φ = ω²r²/2, with ω in Myr⁻¹."""
+    return 0.5 * omega**2 * jnp.sum(position**2)
+
+
+def kepler_potential(position: jax.Array, *, mu: float = 0.45) -> jax.Array:
+    """Return Φ = -μ/r, with μ = GM in kpc³/Myr²."""
+    return -mu / jnp.linalg.norm(position)
+
+
+def vector_field(_t: jax.Array, state: jax.Array, potential: Potential) -> jax.Array:
+    """Evolve position and velocity using acceleration = -∇Φ."""
+    return jnp.concatenate((state[3:], -jax.grad(potential)(state[:3])))
+
+
+def solve_orbit(potential: Potential, *, speed_fraction: float = 1.0) -> dfx.Solution:
+    """Integrate from 8 kpc for one circular-orbit period of the potential."""
+    position = jnp.array([8.0, 0.0, 0.0])
+    circular_speed = jnp.sqrt(position[0] * jax.grad(potential)(position)[0])
+    period = float(2 * jnp.pi * position[0] / circular_speed)
+    velocity = jnp.array([0.0, speed_fraction * circular_speed, 0.0])
+    return dfx.diffeqsolve(
+        dfx.ODETerm(vector_field),
+        dfx.Dopri8(),
+        t0=0.0,
+        t1=period,
+        dt0=period / 1000,
+        y0=jnp.concatenate((position, velocity)),
+        args=potential,
+        saveat=dfx.SaveAt(dense=True),
+        stepsize_controller=dfx.PIDController(rtol=1e-10, atol=1e-12),
+        max_steps=4096,
+    )
 
 
 def storage_bytes(tree: Any) -> int:
@@ -31,89 +69,70 @@ def storage_bytes(tree: Any) -> int:
     return sum(x.nbytes for x in jax.tree.leaves(tree) if eqx.is_array(x))
 
 
+def compare_solution(
+    sol: dfx.Solution, budget: int, times: jax.Array, reference: jax.Array
+) -> tuple[jax.Array, jax.Array, int]:
+    """Check a compact solution and return its values, position errors, and bytes."""
+    small = eqx.filter_jit(ft.partial(subsample, max_steps=budget))(sol)
+    values = jax.vmap(small.evaluate)(times)
+    errors = jnp.linalg.norm(values[:, :3] - reference[:, :3], axis=-1)
+    size = storage_bytes(small.interpolation)
+    np.testing.assert_array_less(size, storage_bytes(sol.interpolation))
+    np.testing.assert_allclose(
+        values[jnp.array([0, -1])], reference[jnp.array([0, -1])], rtol=0, atol=1e-12
+    )
+    if budget >= int(sol.stats["num_accepted_steps"]):
+        roundoff = 32 * np.finfo(reference.dtype).eps
+        np.testing.assert_allclose(
+            values,
+            reference,
+            rtol=roundoff,
+            atol=roundoff * float(jnp.max(jnp.abs(reference))),
+        )
+    return values, errors, size
+
+
+def plot_orbit(axes: tuple[Axes, Axes], name: str, sol: dfx.Solution) -> None:
+    """Plot an orbit and its subsampling errors, checking convergence."""
+    orbit_ax, error_ax = axes
+    times = jnp.linspace(sol.t0, sol.t1, 2001)
+    reference = jax.vmap(sol.evaluate)(times)
+    original_bytes = storage_bytes(sol.interpolation)
+    accepted = int(sol.stats["num_accepted_steps"])
+    orbit_ax.plot(reference[:, 0], reference[:, 1], label="original", color="black")
+    print(f"{name}: {accepted} accepted steps, {original_bytes:,} dense bytes")  # noqa: T201
+    previous_error = np.inf
+    for budget in BUDGETS:
+        values, errors, size = compare_solution(sol, budget, times, reference)
+        error = float(jnp.max(errors))
+        np.testing.assert_array_less(error, previous_error + 1e-12)
+        previous_error = error
+        label = f"{budget} intervals"
+        orbit_ax.plot(values[:, 0], values[:, 1], "--", label=label)
+        error_ax.semilogy(times, jnp.maximum(errors, 1e-15), label=label)
+        print(  # noqa: T201
+            f"  {budget:2d} intervals: {size:7,d} bytes "
+            f"({original_bytes / size:.1f}x smaller), "
+            f"max position error {error:.3e} kpc"
+        )
+    orbit_ax.set(title=name, xlabel="x [kpc]", ylabel="y [kpc]", aspect="equal")
+    error_ax.set(
+        title=f"{name}: error relative to dense reference",
+        xlabel="t [Myr]",
+        ylabel="position error [kpc]",
+    )
+    for ax in axes:
+        ax.legend(fontsize="small")
+
+
 def main(output: Path) -> None:
-    """Integrate circular and eccentric orbits and check resampling convergence."""
+    """Render the comparisons using a circular harmonic and eccentric Kepler orbit."""
     jax.config.update("jax_enable_x64", True)  # noqa: FBT003
-    potentials = {
-        "Harmonic oscillator": gp.HarmonicOscillatorPotential(
-            omega=u.Q(0.03, "1/Myr"), units="galactic"
-        ),
-        "Kepler": gp.KeplerPotential(m_tot=u.Q(1e11, "Msun"), units="galactic"),
-    }
     fig, axes = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)
-    for row, (name, potential) in enumerate(potentials.items()):
-        radius = 8.0  # kpc
-        acceleration = u.ustrip(
-            "kpc/Myr2",
-            potential.acceleration(u.Q([radius, 0.0, 0.0], "kpc"), t=u.Q(0.0, "Myr")),
-        )
-        circular_speed = jnp.sqrt(-radius * acceleration[0])
-        # An eccentric Kepler orbit exercises nonuniform orbital speeds.
-        speed = circular_speed * (0.8 if name == "Kepler" else 1.0)
-        period = 2 * jnp.pi * radius / circular_speed
-        end = float(period)
-
-        def vector_field(t: jax.Array, y: jax.Array, potential: Any) -> jax.Array:
-            force = potential.acceleration(u.Q(y[:3], "kpc"), t=u.Q(t, "Myr"))
-            return jnp.concatenate((y[3:], u.ustrip("kpc/Myr2", force)))
-
-        sol = dfx.diffeqsolve(
-            dfx.ODETerm(vector_field),
-            dfx.Dopri8(),
-            0.0,
-            end,
-            end / 1000,
-            jnp.array([radius, 0.0, 0.0, 0.0, speed, 0.0]),
-            args=potential,
-            saveat=dfx.SaveAt(dense=True),
-            stepsize_controller=dfx.PIDController(rtol=1e-10, atol=1e-12),
-            max_steps=4096,
-        )
-        times = jnp.linspace(0.0, end, 2001)
-        reference = jax.vmap(sol.evaluate)(times)
-        original_bytes = storage_bytes(sol.interpolation)
-        accepted = int(sol.stats["num_accepted_steps"])
-        axes[row, 0].plot(
-            reference[:, 0], reference[:, 1], label="original", color="black"
-        )
-        print(f"{name}: {accepted} accepted steps, {original_bytes:,} dense bytes")  # noqa: T201
-        previous_error = np.inf
-        for count in (8, 16, 32, 64):
-            small = eqx.filter_jit(ft.partial(subsample, max_steps=count))(sol)
-            values = jax.vmap(small.evaluate)(times)
-            errors = jnp.linalg.norm(values[:, :3] - reference[:, :3], axis=-1)
-            error = float(jnp.max(errors))
-            np.testing.assert_array_less(error, previous_error + 1e-12)
-            previous_error = error
-            reduced_bytes = storage_bytes(small.interpolation)
-            np.testing.assert_array_less(reduced_bytes, original_bytes)
-            if count >= accepted:
-                np.testing.assert_array_equal(values, reference)
-            else:
-                np.testing.assert_allclose(
-                    values[jnp.array([0, -1]), :],
-                    reference[jnp.array([0, -1]), :],
-                    atol=1e-12,
-                )
-            axes[row, 0].plot(
-                values[:, 0], values[:, 1], "--", label=f"{count} intervals"
-            )
-            axes[row, 1].semilogy(
-                times, jnp.maximum(errors, 1e-15), label=f"{count} intervals"
-            )
-            print(  # noqa: T201
-                f"  {count:2d} intervals: {reduced_bytes:7,d} bytes "
-                f"({original_bytes / reduced_bytes:.1f}x smaller), "
-                f"max position error {error:.3e} kpc"
-            )
-        axes[row, 0].set(title=name, xlabel="x [kpc]", ylabel="y [kpc]", aspect="equal")
-        axes[row, 1].set(
-            title=f"{name}: error relative to dense reference",
-            xlabel="t [Myr]",
-            ylabel="position error [kpc]",
-        )
-        axes[row, 0].legend(fontsize="small")
-        axes[row, 1].legend(fontsize="small")
+    plot_orbit(tuple(axes[0]), "Harmonic oscillator", solve_orbit(harmonic_potential))
+    plot_orbit(
+        tuple(axes[1]), "Kepler", solve_orbit(kepler_potential, speed_fraction=0.8)
+    )
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=160)
     plt.close(fig)

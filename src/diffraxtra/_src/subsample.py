@@ -20,47 +20,47 @@ from .interp import VectorizedDenseInterpolation
 _ravel: Callable[[Any], tuple[jax.Array, Callable[[jax.Array], Any]]] = ravel_pytree
 
 
+LocalFactory = Callable[[Any, Any, jax.Array], dfx.AbstractLocalInterpolation]
+
+
+def _packed_factory(
+    cls: Callable[..., dfx.AbstractLocalInterpolation], infos: Any
+) -> tuple[jax.Array, LocalFactory]:
+    """Describe a coefficient layout without retaining the dense buffers."""
+    flat, unravel = _ravel(infos)
+    size = flat.size
+
+    def factory(t0: Any, t1: Any, data: jax.Array) -> dfx.AbstractLocalInterpolation:
+        return cls(t0=t0, t1=t1, **unravel(data[:size]))
+
+    return flat, factory
+
+
 class _LocalInterpolation(dfx.AbstractLocalInterpolation):
-    """Select an original solver piece or a resampled Hermite piece."""
+    """Evaluate packed coefficients in their original or Hermite format."""
 
     t0: Any  # type: ignore[misc]
     t1: Any  # type: ignore[misc]
-    original: dfx.AbstractLocalInterpolation
-    hermite: dfx.ThirdOrderHermitePolynomialInterpolation
+    data: jax.Array
     exact: jax.Array
-
-    def __init__(  # pylint: disable=too-many-arguments
-        self,
-        *,
-        t0: Any,
-        t1: Any,
-        data: jax.Array,
-        exact: jax.Array,
-        original_cls: Callable[..., dfx.AbstractLocalInterpolation],
-        original_unravel: Callable[[jax.Array], Any],
-        hermite_unravel: Callable[[jax.Array], Any],
-        original_size: int,
-        hermite_size: int,
-    ) -> None:
-        self.t0, self.t1 = t0, t1
-        self.original = original_cls(
-            t0=t0, t1=t1, **original_unravel(data[:original_size])
-        )
-        self.hermite = dfx.ThirdOrderHermitePolynomialInterpolation(
-            t0=t0, t1=t1, **hermite_unravel(data[:hermite_size])
-        )
-        self.exact = exact
+    original_factory: LocalFactory = eqx.field(static=True)
+    hermite_factory: LocalFactory = eqx.field(static=True)
 
     @override
     def evaluate(self, t0: Any, t1: Any = None, left: bool = True) -> Any:
+        def evaluate(factory: LocalFactory) -> Any:
+            return factory(self.t0, self.t1, self.data).evaluate(t0, t1, left=left)
+
         return jax.lax.cond(
             self.exact,
-            lambda: self.original.evaluate(t0, t1, left=left),
-            lambda: self.hermite.evaluate(t0, t1, left=left),
+            lambda: evaluate(self.original_factory),
+            lambda: evaluate(self.hermite_factory),
         )
 
 
-def _resample(interp: dfx.DenseInterpolation, max_steps: int) -> dfx.DenseInterpolation:
+def _subsample_interpolation(
+    interp: dfx.DenseInterpolation, max_steps: int
+) -> dfx.DenseInterpolation:
     # The two interpolation layouts each require shape and reconstruction metadata.
     # pylint: disable=too-many-locals
     if interp.ts.ndim != 1:
@@ -72,10 +72,6 @@ def _resample(interp: dfx.DenseInterpolation, max_steps: int) -> dfx.DenseInterp
     if max_steps >= interp.ts.shape[0] - 1:
         return interp
 
-    def resize(x: jax.Array, size: int) -> jax.Array:
-        x = x[:size]
-        return jnp.pad(x, ((0, size - x.shape[0]),) + ((0, 0),) * (x.ndim - 1))
-
     # Both paths have the same static layout, so mixed batches work under JIT.
     exact = interp.ts_size <= max_steps + 1
     original_example = jax.tree.map(
@@ -83,8 +79,12 @@ def _resample(interp: dfx.DenseInterpolation, max_steps: int) -> dfx.DenseInterp
     )
     y_example = jax.tree.map(jnp.zeros_like, interp.y0_if_trivial)
     hermite_example = dict.fromkeys(("y0", "y1", "k0", "k1"), y_example)
-    flat_original, original_unravel = _ravel(original_example)
-    flat_hermite, hermite_unravel = _ravel(hermite_example)
+    flat_original, original_factory = _packed_factory(
+        interp.interpolation_cls, original_example
+    )
+    flat_hermite, hermite_factory = _packed_factory(
+        dfx.ThirdOrderHermitePolynomialInterpolation, hermite_example
+    )
     width = max(flat_original.size, flat_hermite.size)
     dtype = jnp.result_type(flat_original, flat_hermite)
 
@@ -112,10 +112,8 @@ def _resample(interp: dfx.DenseInterpolation, max_steps: int) -> dfx.DenseInterp
         return ts, pack(infos)
 
     def trim() -> tuple[jax.Array, Any]:
-        original = jax.tree.map(lambda x: resize(x, max_steps), interp.infos)
-        ts = resize(interp.ts, max_steps + 1)
-        ts = jnp.where(jnp.arange(max_steps + 1) < interp.ts_size, ts, jnp.inf)
-        return ts, pack(original)
+        original = jax.tree.map(lambda x: x[:max_steps], interp.infos)
+        return interp.ts[: max_steps + 1], pack(original)
 
     ts, data = jax.lax.cond(exact, trim, resample)
     return dfx.DenseInterpolation(
@@ -124,11 +122,8 @@ def _resample(interp: dfx.DenseInterpolation, max_steps: int) -> dfx.DenseInterp
         infos={"data": data, "exact": jnp.full((max_steps,), exact)},
         interpolation_cls=ft.partial(
             _LocalInterpolation,
-            original_cls=interp.interpolation_cls,
-            original_unravel=original_unravel,
-            hermite_unravel=hermite_unravel,
-            original_size=flat_original.size,
-            hermite_size=flat_hermite.size,
+            original_factory=original_factory,
+            hermite_factory=hermite_factory,
         ),
         direction=interp.direction,
         t0_if_trivial=interp.t0_if_trivial,
@@ -199,12 +194,12 @@ def subsample(soln: dfx.Solution, /, *, max_steps: int) -> dfx.Solution:
 
     interp = cast("Any", soln.interpolation)
     if isinstance(interp, VectorizedDenseInterpolation):
-        scalar = jax.vmap(lambda x: _resample(x, max_steps))(
+        scalar = jax.vmap(lambda x: _subsample_interpolation(x, max_steps))(
             interp.scalar_interpolation
         )
         new_interp = eqx.tree_at(lambda x: x.scalar_interpolation, interp, scalar)
     elif isinstance(interp, dfx.DenseInterpolation):
-        new_interp = _resample(interp, max_steps)
+        new_interp = _subsample_interpolation(interp, max_steps)
     elif interp is None:
         msg = "subsample requires a dense solution; use SaveAt(dense=True)."
         raise ValueError(msg)

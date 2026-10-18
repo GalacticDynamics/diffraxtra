@@ -368,12 +368,13 @@ integer under JIT. PyTree states, backward solves, and
 `VectorizedDenseInterpolation` are supported. Apply `jax.vmap` to compact an
 ordinary batch of dense solutions.
 
-See [the runnable galax orbit example](examples/subsample_orbits.py) for a
-harmonic orbit and an eccentric Kepler orbit, with storage measurements and
-interpolation convergence checks. It additionally requires galax and matplotlib:
+See [the runnable orbit example](examples/subsample_orbits.py) for a harmonic
+orbit and an eccentric Kepler orbit, with storage measurements and interpolation
+convergence checks. It uses handwritten potential functions; matplotlib is the
+only extra dependency:
 
 ```bash
-python examples/subsample_orbits.py --output /tmp/subsample-orbits.png
+uv run --with matplotlib python examples/subsample_orbits.py --output /tmp/subsample-orbits.png
 ```
 
 ## Citation

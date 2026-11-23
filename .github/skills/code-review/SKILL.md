@@ -120,6 +120,12 @@ annotations both have to survive. A **new** overridable field should follow the
 same pattern, not invent a second convention. `max_steps` is also `static=True`;
 leave it that way.
 
+The `max_steps` **field** has a second sentinel, `"auto"`, resolved in
+`__call__` after the `MISSING` check: `len(ts) - 1` for a `diffrax.StepTo`
+controller, the scraped `default_max_steps` otherwise. It must stay resolved at
+solve time, not at construction, so that `eqx.tree_at` on `stepsize_controller`
+picks up the new grid. An explicit integer or `None` must never be rewritten.
+
 ## Shape bookkeeping
 
 [interp.py](../../../src/diffraxtra/_src/interp.py) maintains one invariant by

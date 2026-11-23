@@ -14,27 +14,12 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike, Real
 
 
-# jax < 0.5.3 has no JVP rule, and jax < 0.4.38 no batching rule, for
-# `optimization_barrier`. The barrier is the identity, so both rules are given
-# here by hand.
+# jax < 0.5.3 has no JVP rule for `optimization_barrier`. The barrier is the
+# identity, so its tangent passes straight through.
 # TODO: call `jax.lax.optimization_barrier` directly once the jax floor is 0.5.3.
-@jax.custom_batching.custom_vmap
-def _batchable_barrier(x: Array) -> Array:
-    return jax.lax.optimization_barrier(x)  # type: ignore[no-untyped-call,no-any-return]
-
-
-@_batchable_barrier.def_vmap
-def _barrier_vmap(
-    axis_size: int,  # noqa: ARG001  # pylint: disable=unused-argument
-    in_batched: list[bool],
-    x: Array,
-) -> tuple[Array, bool]:
-    return _batchable_barrier(x), in_batched[0]
-
-
 @jax.custom_jvp
 def _barrier(x: Array) -> Array:
-    return _batchable_barrier(x)  # type: ignore[no-any-return]
+    return jax.lax.optimization_barrier(x)  # type: ignore[no-untyped-call,no-any-return]
 
 
 @_barrier.defjvp

@@ -24,8 +24,8 @@
   ]
   dynamic = ["version"]
   dependencies = [
-    "diffrax>=0.6",
-    "equinox>=0.11.8",
+    "diffrax>=0.6.2",
+    "equinox>=0.11.10",
     "jaxtyping>=0.2.35",
     "plum-dispatch>=2.5.7",
     "typing_extensions>=4.12.2",
@@ -143,6 +143,8 @@ filterwarnings = [
   "ignore:jax.core.pp_eqn_rules is deprecated:DeprecationWarning",
   # Equinox 0.11.5 & Jax 0.4.35
   "ignore:jax.interpreters.batching.NotMapped is deprecated:DeprecationWarning",
+  # Equinox 0.11.10 & Jax 0.4.38
+  "ignore:jax\\.core\\.\\w+ is deprecated:DeprecationWarning",
 ]
 log_cli_level = "INFO"
 testpaths = ["README.md", "src/", "skills/", "tests/"]
@@ -218,7 +220,6 @@ constraint-dependencies = [
   "pillow>=10.3.0",
   # Jax
   "scipy>=1.14",
-  "jax>0.4.34",
   # Misc
   "opt-einsum>=3.3.0",
   # Transitive dependencies for --resolution lowest

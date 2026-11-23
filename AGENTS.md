@@ -131,7 +131,7 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
 - **`jax` and `numpy` are imported in `src/` but not declared** in
   `[project.dependencies]` (which lists `diffrax`, `equinox`, `jaxtyping`,
   `plum-dispatch`, `typing_extensions`). They arrive transitively.
-- **CI runs `--resolution lowest`**, so new code must work on `diffrax>=0.6`,
+- **CI runs `--resolution lowest`**, so new code must work on `diffrax>=0.6.2`,
   not just the newest release. Because that lowers _transitive_ deps too, a
   dependency that only publishes an old sdist can break the job during install,
   before a single test runs — hence the transitive lower bounds in
@@ -153,8 +153,9 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
 
 ## Dependencies
 
-`diffrax>=0.6`, `equinox>=0.11.8`, `jaxtyping>=0.2.35`, `plum-dispatch>=2.5.7`,
-`typing_extensions>=4.12.2`; Python >=3.11. Minimum supported versions follow
+`diffrax>=0.6.2`, `equinox>=0.11.10`, `jaxtyping>=0.2.35`,
+`plum-dispatch>=2.5.7`, `typing_extensions>=4.12.2`; Python >=3.11. Minimum
+supported versions follow
 [SPEC 0](https://scientific-python.org/specs/spec-0000/).
 
 ## Further Reading

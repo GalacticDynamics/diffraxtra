@@ -31,7 +31,7 @@ Each class comes as an `Abstract*`/`@final` pair of `equinox.Module`s, and each
 has a `plum`-dispatched `from_` constructor.
 
 Checked against diffraxtra 1.5.3, diffrax 0.7.0, equinox 0.13.0, plum-dispatch
-2.5.7, jax 0.7.1, Python >=3.11. The supported floor is `diffrax>=0.6`.
+2.5.7, jax 0.7.1, Python >=3.11. The supported floor is `diffrax>=0.6.2`.
 
 ## Quick start
 
@@ -376,6 +376,6 @@ compile-time constant everywhere it is used.
 diffraxtra reads `diffrax.diffeqsolve`'s defaults out of its signature at import
 time, so the 4096 that `max_steps="auto"` falls back to, the default `adjoint`,
 and the default `stepsize_controller` are diffrax's values, and change when
-diffrax changes. `diffrax>=0.6` is the supported floor and is tested in CI;
+diffrax changes. `diffrax>=0.6.2` is the supported floor and is tested in CI;
 minimum supported versions follow
 [SPEC 0](https://scientific-python.org/specs/spec-0000/).

@@ -17,7 +17,6 @@ constraints = [
     { name = "decorator", specifier = ">=5.1" },
     { name = "future", specifier = ">=0.16.0" },
     { name = "iniconfig", specifier = ">=0.1.0" },
-    { name = "jax", specifier = ">0.4.34" },
     { name = "matplotlib", specifier = ">=3.10" },
     { name = "nest-asyncio", specifier = ">=0.1.0" },
     { name = "opt-einsum", specifier = ">=3.3.0" },
@@ -722,8 +721,8 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "diffrax", specifier = ">=0.6" },
-    { name = "equinox", specifier = ">=0.11.8" },
+    { name = "diffrax", specifier = ">=0.6.2" },
+    { name = "equinox", specifier = ">=0.11.10" },
     { name = "jaxtyping", specifier = ">=0.2.35" },
     { name = "plum-dispatch", specifier = ">=2.5.7" },
     { name = "typing-extensions", specifier = ">=4.12.2" },

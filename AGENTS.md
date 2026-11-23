@@ -153,7 +153,7 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
 
 ## Dependencies
 
-`diffrax>=0.6`, `equinox>=0.11.5`, `jaxtyping>=0.2.35`, `plum-dispatch>=2.5.7`,
+`diffrax>=0.6`, `equinox>=0.11.8`, `jaxtyping>=0.2.35`, `plum-dispatch>=2.5.7`,
 `typing_extensions>=4.12.2`; Python >=3.11. Minimum supported versions follow
 [SPEC 0](https://scientific-python.org/specs/spec-0000/).
 

@@ -25,7 +25,7 @@
   dynamic = ["version"]
   dependencies = [
     "diffrax>=0.6",
-    "equinox>=0.11.5",
+    "equinox>=0.11.8",
     "jaxtyping>=0.2.35",
     "plum-dispatch>=2.5.7",
     "typing_extensions>=4.12.2",

@@ -723,7 +723,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "diffrax", specifier = ">=0.6" },
-    { name = "equinox", specifier = ">=0.11.5" },
+    { name = "equinox", specifier = ">=0.11.8" },
     { name = "jaxtyping", specifier = ">=0.2.35" },
     { name = "plum-dispatch", specifier = ">=2.5.7" },
     { name = "typing-extensions", specifier = ">=4.12.2" },

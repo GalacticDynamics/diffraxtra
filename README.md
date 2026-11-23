@@ -193,6 +193,24 @@ DiffEqSolver(...solver=Dopri5(...)...
 For a full enumeration of the ways to construct a `DiffEqSolver` object, see
 `diffraxtra.DiffEqSolver.from_`.
 
+### `fixed_steps`
+
+`fixed_steps(t0, dt, n_steps)` returns the `t0`, `t1`, `diffrax.StepTo`
+controller and `max_steps` for `n_steps` fixed steps of size `dt`. `t0` and `dt`
+can be traced, and a negative `dt` runs backward. A `DiffEqSolver` with a
+`StepTo` controller sets `max_steps` to the number of steps on the grid by
+itself, so you can drop the fourth value.
+
+```pycon
+>>> from diffraxtra import fixed_steps
+>>> t0, t1, stepto, max_steps = fixed_steps(0.0, 0.1, 30)
+>>> solver = DiffEqSolver(dfx.Tsit5(), stepsize_controller=stepto)
+>>> soln = solver(term, t0, t1, None, 1.0)
+>>> soln.ys.round(3)
+Array([0.05], dtype=float64)
+
+```
+
 ### `VectorizedDenseInterpolation`
 
 Vectorized wrapper around a `diffrax.DenseInterpolation`

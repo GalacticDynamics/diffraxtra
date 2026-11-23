@@ -7,13 +7,14 @@ This module is private. See `diffraxtra` for the public API.
 __all__ = [
     "AbstractDiffEqSolver",  # exported to Public API
     "params",
+    "default_max_steps",
 ]
 
 import functools as ft
 import inspect
 from collections.abc import Mapping
 from dataclasses import _MISSING_TYPE, KW_ONLY, MISSING
-from typing import Any, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 import diffrax as dfx
 import equinox as eqx
@@ -34,6 +35,7 @@ default_saveat = params["saveat"].default
 default_progress_meter = params["progress_meter"].default
 default_event = params["event"].default
 default_throw = params["throw"].default
+default_max_steps = params["max_steps"].default
 
 
 class AbstractDiffEqSolver(eqx.Module):
@@ -72,9 +74,11 @@ class AbstractDiffEqSolver(eqx.Module):
     event: eqx.AbstractVar[dfx.Event | None]
 
     #: The maximum number of steps to take before quitting.
+    #: ``"auto"`` means ``len(ts) - 1`` with a `diffrax.StepTo` controller, and
+    #: `diffrax.diffeqsolve`'s default otherwise.
     #: Some `diffrax.SaveAt` options can be incompatible with `max_steps=None`,
     #: so you can override the `max_steps` argument when calling `DiffEqSolver`
-    max_steps: eqx.AbstractVar[int | None]
+    max_steps: eqx.AbstractVar[int | None | Literal["auto"]]
 
     # -------------------------------------------
 
@@ -94,7 +98,7 @@ class AbstractDiffEqSolver(eqx.Module):
         # Diffrax options
         saveat: dfx.SaveAt = default_saveat,
         event: dfx.Event | None | _MISSING_TYPE = MISSING,
-        max_steps: int | None | _MISSING_TYPE = MISSING,
+        max_steps: int | None | Literal["auto"] | _MISSING_TYPE = MISSING,
         throw: bool = default_throw,
         progress_meter: dfx.AbstractProgressMeter[Any] = default_progress_meter,
         solver_state: PyTree[ArrayLike] | None = None,
@@ -118,6 +122,9 @@ class AbstractDiffEqSolver(eqx.Module):
             adjoint: how to differentiate diffeqsolve.
             event: an event at which to terminate the solve early.
             max_steps: the maximum number of steps to take before quitting.
+                Omit it to use the field. ``"auto"`` means ``len(ts) - 1``
+                with a `diffrax.StepTo` controller, and diffrax's default
+                otherwise.
             throw: whether to raise an exception if the integration fails.
             progress_meter: a progress meter.
             solver_state: some initial state for the solver.
@@ -130,6 +137,15 @@ class AbstractDiffEqSolver(eqx.Module):
         """
         # Parse `max_steps`, allowing for it to be overridden.
         max_steps = self.max_steps if max_steps is MISSING else max_steps
+        # A `StepTo` grid takes exactly `len(ts) - 1` steps. An exact bound
+        # matters because `RecursiveCheckpointAdjoint` sizes its checkpoints
+        # from it. `len(ts)` is a shape, so it is static even under `jit`.
+        if max_steps == "auto":
+            max_steps = (
+                len(self.stepsize_controller.ts) - 1
+                if isinstance(self.stepsize_controller, dfx.StepTo)
+                else default_max_steps
+            )
         # Parse `event`, allowing for it to be overridden.
         event = self.event if event is MISSING else event
 

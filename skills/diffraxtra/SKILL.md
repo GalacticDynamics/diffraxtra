@@ -7,14 +7,15 @@ description:
   when a batched `diffrax.diffeqsolve` result needs `.evaluate`, when the output
   of a batched solve has an unexpected shape, when `vectorize_interpolation` or
   `apply_to_solution` appears, when a per-call `max_steps` or `event` override
-  is needed, when `max_steps=None` conflicts with a `diffrax.SaveAt`, or when a
-  `DiffEqSolver` recompiles on every call.
+  is needed, when `max_steps=None` conflicts with a `diffrax.SaveAt`, when a
+  `DiffEqSolver` recompiles on every call, or when running a fixed number of
+  `diffrax.StepTo` steps with `fixed_steps`.
 ---
 
 # Using diffraxtra Effectively
 
 `diffraxtra` is two extras for [diffrax](https://docs.kidger.site/diffrax/), and
-nothing else:
+a small helper:
 
 - **`DiffEqSolver`** — an `equinox.Module` holding a `solver`,
   `stepsize_controller`, `adjoint`, `event` and `max_steps`, callable with the
@@ -23,9 +24,11 @@ nothing else:
 - **`VectorizedDenseInterpolation`** — a wrapper around
   `diffrax.DenseInterpolation` that evaluates a **batched** solution at an
   **arbitrarily-shaped** array of times, without you writing the `jax.vmap`.
+- **`fixed_steps(t0, dt, n_steps)`** — the `(t0, t1, StepTo, max_steps)` for
+  `n_steps` fixed steps of size `dt`, with `t0` and `dt` allowed to be traced.
 
-Each comes as an `Abstract*`/`@final` pair of `equinox.Module`s, and each has a
-`plum`-dispatched `from_` constructor. That is the whole library.
+Each class comes as an `Abstract*`/`@final` pair of `equinox.Module`s, and each
+has a `plum`-dispatched `from_` constructor.
 
 Checked against diffraxtra 1.5.3, diffrax 0.7.0, equinox 0.13.0, plum-dispatch
 2.5.7, jax 0.7.1, Python >=3.11. The supported floor is `diffrax>=0.6`.
@@ -179,8 +182,13 @@ genuinely three-way — omitting the argument is **not** the same as passing
 `None`. The parameter defaults to `dataclasses.MISSING`, and only that sentinel
 means "use the field".
 
+The `max_steps` field defaults to `"auto"`, which is resolved at solve time.
+With a `diffrax.StepTo` controller it is `len(ts) - 1`, the exact number of
+steps on the grid. With any other controller it is diffrax's default, 4096. An
+integer or `None`, on the field or in the call, is used as is.
+
 ```python
-assert DiffEqSolver(dfx.Dopri5()).max_steps == 4096  # diffrax's default, scraped
+assert DiffEqSolver(dfx.Dopri5()).max_steps == "auto"
 assert DiffEqSolver(dfx.Dopri5()).event is None
 
 solver(term, t0=0.0, t1=3.0, dt0=0.1, y0=1.0, saveat=t1_only)  # use the field
@@ -218,6 +226,33 @@ solver(
 
 That is exactly why the per-call override exists — configure a solver once with
 a bounded `max_steps`, and drop the bound only for the calls that can take it.
+
+## Fixed steps
+
+`fixed_steps(t0, dt, n_steps)` builds the grid `t0 + dt * arange(n_steps + 1)`
+behind `jax.lax.optimization_barrier` and returns `(t0, t1, StepTo, max_steps)`.
+The barrier stops XLA's simplifier from rewriting `t1` and the grid separately
+with different roundings, and `StepTo` rejects a `t1` that is one rounding off
+`ts[-1]`. `t0` and `dt` can be traced, and a negative `dt` runs backward. With
+`DiffEqSolver` the fourth value isn't needed, because `"auto"` reads it off the
+`StepTo`. With `RecursiveCheckpointAdjoint` the exact bound matters: it sets how
+many checkpoints the backward pass stores.
+
+```python
+from diffraxtra import fixed_steps
+
+
+@jax.jit
+def final_y(t0, dt):
+    t0, t1, stepto, _ = fixed_steps(t0, dt, 100)
+    fixed = DiffEqSolver(dfx.Heun(), stepsize_controller=stepto)
+    return fixed(dfx.ODETerm(lambda t, y, args: t), t0, t1, None, 1.0).ys[-1]
+
+
+assert jnp.allclose(final_y(1.0, 0.01), 2.5)  # 1 + (2**2 - 1**2) / 2
+assert jnp.allclose(final_y(2.0, -0.01), -0.5)  # backward: 1 + (1**2 - 2**2) / 2
+assert jnp.allclose(jax.grad(final_y, argnums=1)(1.0, 0.01), 200.0)  # n_steps * t1
+```
 
 ## What is static, and what retraces
 
@@ -339,7 +374,8 @@ compile-time constant everywhere it is used.
 ## Version notes
 
 diffraxtra reads `diffrax.diffeqsolve`'s defaults out of its signature at import
-time, so `max_steps=4096`, the default `adjoint`, and the default
-`stepsize_controller` are diffrax's values, and change when diffrax changes.
-`diffrax>=0.6` is the supported floor and is tested in CI; minimum supported
-versions follow [SPEC 0](https://scientific-python.org/specs/spec-0000/).
+time, so the 4096 that `max_steps="auto"` falls back to, the default `adjoint`,
+and the default `stepsize_controller` are diffrax's values, and change when
+diffrax changes. `diffrax>=0.6` is the supported floor and is tested in CI;
+minimum supported versions follow
+[SPEC 0](https://scientific-python.org/specs/spec-0000/).

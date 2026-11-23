@@ -1,10 +1,13 @@
 """Extras for `diffrax`. Private API."""
 
-__all__ = [  # pylint: disable=R0801
+# pylint: disable=duplicate-code
+
+__all__ = [
     "AbstractDiffEqSolver",
     "DiffEqSolver",
     "AbstractVectorizedDenseInterpolation",
     "VectorizedDenseInterpolation",
+    "fixed_steps",
 ]
 
 from .diffeq import DiffEqSolver
@@ -13,3 +16,4 @@ from .interp import (
     AbstractVectorizedDenseInterpolation,
     VectorizedDenseInterpolation,
 )
+from .steps import fixed_steps

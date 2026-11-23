@@ -4,7 +4,8 @@
 `DiffEqSolver`, an `equinox.Module` that pre-configures `diffrax.diffeqsolve`
 behind a callable object, and `VectorizedDenseInterpolation`, which makes the
 `diffrax.DenseInterpolation` produced by a batched solve evaluable at
-arbitrarily-shaped arrays of times.
+arbitrarily-shaped arrays of times. A small helper, `fixed_steps`, builds a
+`diffrax.StepTo` grid for a fixed number of steps.
 
 The design goal is to extend diffrax without diverging from it: follow diffrax's
 own API conventions, keep dependencies minimal, and keep every object a PyTree
@@ -34,7 +35,7 @@ new session needs its group to exist.
 
 ## Architecture
 
-The public API is the four names re-exported from
+The public API is the five names re-exported from
 [src/diffraxtra/\_\_init\_\_.py](src/diffraxtra/__init__.py); everything else
 lives under `src/diffraxtra/_src/` and is private. Each public class is an
 abstract/`@final` pair of `equinox.Module`s, with `eqx.AbstractVar` fields on
@@ -45,6 +46,7 @@ the ABC.
 | [\_src/diffeq_abc.py](src/diffraxtra/_src/diffeq_abc.py) | `AbstractDiffEqSolver`: the five `AbstractVar` fields, the plum-dispatched `__call__` pair that forwards to `dfx.diffeqsolve`, the `params` signature scrape, and four `from_` overloads                           |
 | [\_src/diffeq.py](src/diffraxtra/_src/diffeq.py)         | `DiffEqSolver`: the `@final` concrete module, plus the `default_stepsize_controller` / `default_max_steps` / `default_adjoint` re-exports                                                                          |
 | [\_src/interp.py](src/diffraxtra/_src/interp.py)         | `AbstractVectorizedDenseInterpolation` and `VectorizedDenseInterpolation`: the batch-flattening `__init__`, the doubly-vmapped `evaluate`, the `DenseInterpolation` property forwards, and three `from_` overloads |
+| [\_src/steps.py](src/diffraxtra/_src/steps.py)           | `fixed_steps`: the `optimization_barrier`-wrapped `StepTo` grid and `(t0, t1, StepTo, max_steps)`                                                                                                                  |
 | [conftest.py](conftest.py)                               | sybil collection and x64                                                                                                                                                                                           |
 
 `__call__` is **two** methods: a `@dispatch`ed positional one on the class, and
@@ -106,7 +108,9 @@ is an example run by [sybil](https://sybil.readthedocs.io) from
   "not passed" (use the field) stays distinguishable from an explicit `None`
   (unbounded / no event). Never "simplify" either default to `None`. `max_steps`
   is additionally `static=True`, so each distinct value is a separate
-  compilation.
+  compilation. The `max_steps` field defaults to `"auto"`, resolved at solve
+  time to `len(ts) - 1` for a `diffrax.StepTo` controller and to the scraped
+  `default_max_steps` otherwise.
 - **`__call__` is `eqx.filter_jit`-wrapped, twice.** `throw`,
   `vectorize_interpolation` and `max_steps` are static; a structurally different
   `solver` / `stepsize_controller` / `adjoint` retraces. Both dispatch overloads

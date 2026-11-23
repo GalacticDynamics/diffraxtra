@@ -5,6 +5,7 @@ __all__ = [
     "DiffEqSolver",
     "AbstractVectorizedDenseInterpolation",
     "VectorizedDenseInterpolation",
+    "fixed_steps",
 ]
 
 from ._src import (
@@ -12,6 +13,7 @@ from ._src import (
     AbstractVectorizedDenseInterpolation,
     DiffEqSolver,
     VectorizedDenseInterpolation,
+    fixed_steps,
 )
 from ._version import (  # noqa: F401
     version as __version__,
